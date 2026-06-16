@@ -1,0 +1,20 @@
+# Dependências
+node_modules/
+app/node_modules/
+
+# Build
+app/dist/
+
+# Ambiente / segredos
+.env
+.env.*
+!.env.example
+app/.env.local
+app/.env
+
+# Logs e temporários
+*.log
+.DS_Store
+
+# Supabase
+supabase/combined.sql
