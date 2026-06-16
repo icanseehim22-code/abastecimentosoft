@@ -8,6 +8,7 @@ import type { Abastecimento, AbastecimentoView } from '../types'
 import { fmtBRL, fmtNum, fmtDataBR, hojeISO, COMBUSTIVEIS } from '../lib/format'
 import Modal from '../components/ui/Modal'
 import { Field, Input, Select, Textarea, btn } from '../components/ui/fields'
+import { motion } from 'framer-motion'
 
 const AUTORIZADORES = ['José Paulo', 'Marco Aurelio', 'Hamilton', 'Welton']
 
@@ -60,18 +61,22 @@ export default function Abastecimentos() {
   }
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Abastecimentos</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Abastecimentos</h1>
         <button className={btn()} onClick={() => setEdit(novo())}>
           <Plus className="h-4 w-4" /> Novo abastecimento
         </button>
       </div>
 
       {/* Filtros */}
-      <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-5">
+      <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-5 dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
         <div className="relative md:col-span-2">
-          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <Input className="pl-9" placeholder="Buscar motorista, placa, autorização…"
             value={filtros.busca ?? ''} onChange={(e) => setFiltros({ ...filtros, busca: e.target.value || undefined })} />
         </div>
@@ -85,15 +90,15 @@ export default function Abastecimentos() {
 
       {/* Totais */}
       <div className="mb-4 flex flex-wrap gap-3 text-sm">
-        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200">{lista.length} registros</span>
-        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200">⛽ {fmtNum(totais.litros)} L</span>
-        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200">💰 {fmtBRL(totais.valor)}</span>
+        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-slate-900/50 dark:ring-slate-800 dark:text-slate-200">{lista.length} registros</span>
+        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-slate-900/50 dark:ring-slate-800 dark:text-slate-250">⛽ {fmtNum(totais.litros)} L</span>
+        <span className="rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-slate-900/50 dark:ring-slate-800 dark:text-slate-250">💰 {fmtBRL(totais.valor)}</span>
       </div>
 
       {/* Tabela */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+          <thead className="bg-slate-50 dark:bg-slate-900/50 text-left text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th className="px-4 py-3">Data</th>
               <th className="px-4 py-3">Veículo</th>
@@ -106,28 +111,28 @@ export default function Abastecimentos() {
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {isLoading && (
-              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Carregando…</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Carregando…</td></tr>
             )}
             {!isLoading && lista.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">
-                <Fuel className="mx-auto mb-2 h-8 w-8" />Nenhum abastecimento encontrado.
+              <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400 dark:text-slate-500">
+                <Fuel className="mx-auto mb-2 h-8 w-8 text-slate-500" />Nenhum abastecimento encontrado.
               </td></tr>
             )}
             {lista.map((r) => (
-              <tr key={r.id} className="hover:bg-slate-50/60">
-                <td className="whitespace-nowrap px-4 py-3">{fmtDataBR(r.data)}</td>
-                <td className="px-4 py-3"><div className="font-medium text-slate-800">{r.veiculo_nome}</div><div className="text-xs text-slate-400">{r.placa}</div></td>
-                <td className="px-4 py-3">{r.motorista || '—'}</td>
-                <td className="px-4 py-3">{r.combustivel}</td>
-                <td className="px-4 py-3 text-right">{r.km ? fmtNum(r.km, 0) : '—'}</td>
-                <td className="px-4 py-3 text-right">{fmtNum(r.litros)}</td>
-                <td className="px-4 py-3 text-right">{fmtBRL(r.valor)}</td>
-                <td className="px-4 py-3 text-right text-slate-500">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
+              <tr key={r.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/20">
+                <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">{fmtDataBR(r.data)}</td>
+                <td className="px-4 py-3"><div className="font-medium text-slate-800 dark:text-slate-200">{r.veiculo_nome}</div><div className="text-xs text-slate-400 dark:text-slate-500">{r.placa}</div></td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.motorista || '—'}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.combustivel}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{r.km ? fmtNum(r.km, 0) : '—'}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-350">{fmtNum(r.litros)}</td>
+                <td className="px-4 py-3 text-right font-medium text-slate-800 dark:text-slate-200">{fmtBRL(r.valor)}</td>
+                <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-450">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={() => abrirEdicao(r)}><Pencil className="h-4 w-4" /></button>
-                  <button className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={() => excluir(r)}><Trash2 className="h-4 w-4" /></button>
+                  <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" onClick={() => abrirEdicao(r)}><Pencil className="h-4 w-4" /></button>
+                  <button className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400" onClick={() => excluir(r)}><Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -192,6 +197,6 @@ export default function Abastecimentos() {
           </div>
         )}
       </Modal>
-    </div>
+    </motion.div>
   )
 }

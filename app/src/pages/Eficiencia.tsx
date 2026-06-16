@@ -7,6 +7,8 @@ import { Gauge } from 'lucide-react'
 import { useEficiencia, useVeiculos } from '../lib/queries'
 import { fmtBRL, fmtNum, fmtDataBR } from '../lib/format'
 import { soma } from '../lib/analytics'
+import { useTheme } from '../context/ThemeContext'
+import { motion } from 'framer-motion'
 
 const PALETA = ['#16a34a', '#3b62f0', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6']
 
@@ -14,6 +16,7 @@ export default function Eficiencia() {
   const { data: efi = [], isLoading } = useEficiencia()
   const { data: veiculos = [] } = useVeiculos(true)
   const [sel, setSel] = useState<string>('')
+  const { theme } = useTheme()
 
   const nomePorId = useMemo(() => {
     const m = new Map<string, string>()
@@ -46,28 +49,54 @@ export default function Eficiencia() {
 
   const chartKmL = ranking.filter((r) => r.kmL != null).map((r) => ({ nome: r.nome, kmL: Number(r.kmL!.toFixed(2)) }))
 
+  const chartTheme = useMemo(() => {
+    const isDark = theme === 'dark'
+    return {
+      grid: isDark ? '#1e293b' : '#eef2f7',
+      text: isDark ? '#94a3b8' : '#64748b',
+      tooltip: {
+        contentStyle: {
+          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+          borderColor: isDark ? '#334155' : '#e2e8f0',
+          borderRadius: '12px',
+        },
+        itemStyle: { color: isDark ? '#f1f5f9' : '#1e293b' },
+        labelStyle: { color: isDark ? '#94a3b8' : '#64748b' }
+      }
+    }
+  }, [theme])
+
   return (
-    <div>
-      <h1 className="mb-5 text-2xl font-bold text-slate-800">Eficiência</h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <h1 className="mb-5 text-2xl font-bold text-slate-800 dark:text-slate-100">Eficiência</h1>
 
       {isLoading ? (
-        <div className="py-16 text-center text-slate-400">Carregando…</div>
+        <div className="py-16 text-center text-slate-400 dark:text-slate-500">Carregando…</div>
       ) : efi.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-slate-400">
-          <Gauge className="h-10 w-10" />
+        <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-355 bg-white py-16 text-slate-400 dark:border-slate-800 dark:bg-slate-900/40">
+          <Gauge className="h-10 w-10 text-slate-500" />
           <p className="text-sm">Sem dados de KM suficientes para calcular eficiência.</p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h2 className="mb-3 text-sm font-semibold text-slate-700">Consumo médio (km/l) por veículo</h2>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Consumo médio (km/l) por veículo</h2>
               <ResponsiveContainer width="100%" height={Math.max(200, chartKmL.length * 34)}>
                 <BarChart data={chartKmL} layout="vertical" margin={{ left: 20, right: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="nome" tick={{ fontSize: 11 }} width={70} />
-                  <Tooltip formatter={(v) => `${fmtNum(Number(v), 1)} km/l`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: chartTheme.text }} />
+                  <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: chartTheme.text }} width={70} />
+                  <Tooltip
+                    contentStyle={chartTheme.tooltip.contentStyle}
+                    itemStyle={chartTheme.tooltip.itemStyle}
+                    labelStyle={chartTheme.tooltip.labelStyle}
+                    formatter={(v) => `${fmtNum(Number(v), 1)} km/l`}
+                  />
                   <Bar dataKey="kmL" radius={[0, 4, 4, 0]}>
                     {chartKmL.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
                   </Bar>
@@ -75,23 +104,32 @@ export default function Eficiencia() {
               </ResponsiveContainer>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-700">Evolução do consumo</h2>
-                <select className="rounded-lg border border-slate-300 px-2 py-1 text-sm" value={sel} onChange={(e) => setSel(e.target.value)}>
+                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Evolução do consumo</h2>
+                <select
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-brand-500"
+                  value={sel}
+                  onChange={(e) => setSel(e.target.value)}
+                >
                   <option value="">Selecione um veículo…</option>
                   {ranking.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
                 </select>
               </div>
               {serieSel.length === 0 ? (
-                <div className="py-20 text-center text-sm text-slate-400">Selecione um veículo com histórico.</div>
+                <div className="py-20 text-center text-sm text-slate-400 dark:text-slate-500">Selecione um veículo com histórico.</div>
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={serieSel} margin={{ left: -10, right: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-                    <XAxis dataKey="data" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v) => `${fmtNum(Number(v), 1)} km/l`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                    <XAxis dataKey="data" tick={{ fontSize: 10, fill: chartTheme.text }} />
+                    <YAxis tick={{ fontSize: 11, fill: chartTheme.text }} />
+                    <Tooltip
+                      contentStyle={chartTheme.tooltip.contentStyle}
+                      itemStyle={chartTheme.tooltip.itemStyle}
+                      labelStyle={chartTheme.tooltip.labelStyle}
+                      formatter={(v) => `${fmtNum(Number(v), 1)} km/l`}
+                    />
                     <Line dataKey="kmL" stroke="#16a34a" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -99,9 +137,9 @@ export default function Eficiencia() {
             </div>
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <thead className="bg-slate-50 dark:bg-slate-900/50 text-left text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3">Veículo</th>
                   <th className="px-4 py-3 text-right">Consumo</th>
@@ -112,16 +150,16 @@ export default function Eficiencia() {
                   <th className="px-4 py-3 text-right">Abast.</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {ranking.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/60">
-                    <td className="px-4 py-3 font-medium text-slate-800">{r.nome}</td>
-                    <td className="px-4 py-3 text-right">{r.kmL ? `${fmtNum(r.kmL, 1)} km/l` : '—'}</td>
-                    <td className="px-4 py-3 text-right">{r.rsKm ? fmtBRL(r.rsKm) : '—'}</td>
-                    <td className="px-4 py-3 text-right">{fmtNum(r.kmRodado, 0)} km</td>
-                    <td className="px-4 py-3 text-right">{fmtNum(r.litros)} L</td>
-                    <td className="px-4 py-3 text-right">{fmtBRL(r.valor)}</td>
-                    <td className="px-4 py-3 text-right text-slate-500">{r.n}</td>
+                  <tr key={r.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
+                    <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{r.nome}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400">{r.kmL ? `${fmtNum(r.kmL, 1)} km/l` : '—'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-rose-600 dark:text-rose-450">{r.rsKm ? fmtBRL(r.rsKm) : '—'}</td>
+                    <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtNum(r.kmRodado, 0)} km</td>
+                    <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtNum(r.litros)} L</td>
+                    <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtBRL(r.valor)}</td>
+                    <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-450">{r.n}</td>
                   </tr>
                 ))}
               </tbody>
@@ -129,6 +167,6 @@ export default function Eficiencia() {
           </div>
         </>
       )}
-    </div>
+    </motion.div>
   )
 }
