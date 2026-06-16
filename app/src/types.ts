@@ -17,6 +17,7 @@ export interface Veiculo {
   placa: string
   combustivel_padrao: string | null
   capacidade_tanque: number | null
+  km_inicial: number | null
   ativo: boolean
   created_at: string
   updated_at: string
@@ -74,6 +75,8 @@ export interface EficienciaRow {
   data: string
   km: number | null
   km_anterior: number | null
+  km_inicial: number | null
+  km_anterior_efetivo: number | null
   litros: number
   valor: number
   combustivel: string

@@ -7,7 +7,7 @@ import Modal from '../components/ui/Modal'
 import { Field, Input, Select, btn } from '../components/ui/fields'
 import { motion } from 'framer-motion'
 
-const vazio: Partial<Veiculo> = { nome: '', placa: '', combustivel_padrao: '', capacidade_tanque: null, ativo: true }
+const vazio: Partial<Veiculo> = { nome: '', placa: '', combustivel_padrao: '', capacidade_tanque: null, km_inicial: null, ativo: true }
 
 export default function Veiculos() {
   const { data: veiculos = [], isLoading } = useVeiculos(true)
@@ -20,6 +20,7 @@ export default function Veiculos() {
       ...edit,
       placa: edit.placa.trim().toUpperCase(),
       capacidade_tanque: edit.capacidade_tanque ? Number(edit.capacidade_tanque) : null,
+      km_inicial: edit.km_inicial ? Number(edit.km_inicial) : null,
     })
     setEdit(null)
   }
@@ -45,16 +46,17 @@ export default function Veiculos() {
               <th className="px-4 py-3">Placa</th>
               <th className="px-4 py-3">Combustível</th>
               <th className="px-4 py-3 text-right">Tanque (L)</th>
+              <th className="px-4 py-3 text-right">KM Inicial</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {isLoading && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Carregando…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Carregando…</td></tr>
             )}
             {!isLoading && veiculos.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Nenhum veículo.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Nenhum veículo.</td></tr>
             )}
             {veiculos.map((v) => (
               <tr key={v.id} className={`${v.ativo ? '' : 'opacity-50'} hover:bg-slate-50/40 dark:hover:bg-slate-800/20`}>
@@ -64,6 +66,7 @@ export default function Veiculos() {
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{v.placa}</td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{v.combustivel_padrao || '—'}</td>
                 <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-350">{v.capacidade_tanque ? fmtNum(v.capacidade_tanque, 0) : '—'}</td>
+                <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-350">{v.km_inicial ? fmtNum(v.km_inicial, 0) : '—'}</td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${v.ativo ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                     {v.ativo ? 'Ativo' : 'Inativo'}
@@ -102,6 +105,9 @@ export default function Veiculos() {
                 <Input type="number" step="1" value={edit.capacidade_tanque ?? ''} onChange={(e) => setEdit({ ...edit, capacidade_tanque: e.target.value ? Number(e.target.value) : null })} />
               </Field>
             </div>
+            <Field label="KM Inicial (Partida)">
+              <Input type="number" step="1" value={edit.km_inicial ?? ''} onChange={(e) => setEdit({ ...edit, km_inicial: e.target.value ? Number(e.target.value) : null })} placeholder="Ex.: 45000" />
+            </Field>
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 select-none cursor-pointer">
               <input type="checkbox" checked={edit.ativo ?? true} onChange={(e) => setEdit({ ...edit, ativo: e.target.checked })} className="rounded accent-brand-600" />
               Ativo
