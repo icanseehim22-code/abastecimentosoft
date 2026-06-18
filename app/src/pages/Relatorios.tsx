@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
   AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid
@@ -17,6 +18,29 @@ import { Select, Input } from '../components/ui/fields'
 const CORES_PIE = ['#3b62f0', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
 
 export default function Relatorios() {
+  const [isPrinting, setIsPrinting] = useState(false)
+
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      flushSync(() => {
+        setIsPrinting(true)
+      })
+    }
+    const handleAfterPrint = () => {
+      flushSync(() => {
+        setIsPrinting(false)
+      })
+    }
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [])
+
   // Inicializa datas com o mês corrente
   const { primeiroDia, hoje } = useMemo(() => {
     const now = new Date()
@@ -488,18 +512,6 @@ export default function Relatorios() {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
           }
-          .recharts-responsive-container {
-            width: 100% !important;
-          }
-          .recharts-responsive-container svg {
-            width: 100% !important;
-          }
-          .recharts-wrapper {
-            width: 100% !important;
-          }
-          .recharts-surface {
-            width: 100% !important;
-          }
         }
       `}} />
 
@@ -744,20 +756,21 @@ export default function Relatorios() {
         {/* Distribuição por Combustível */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Gastos por Combustível</h3>
-          <div className="w-full h-48">
+          <div className="w-full h-48 flex items-center justify-center">
             {dadosCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width="99%" height={192}>
+              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
                 <PieChart>
                   <Pie
                     data={dadosCombustivel}
                     cx="50%"
                     cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
+                    innerRadius={isPrinting ? 30 : 45}
+                    outerRadius={isPrinting ? 45 : 65}
                     paddingAngle={3}
                     dataKey="value"
+                    isAnimationActive={!isPrinting}
                   >
                     {dadosCombustivel.map((entry, idx) => (
                       <Cell key={entry.name} fill={CORES_PIE[idx % CORES_PIE.length]} />
@@ -774,12 +787,12 @@ export default function Relatorios() {
         {/* Evolução de Gastos */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Histórico de Gastos</h3>
-          <div className="w-full h-48">
+          <div className="w-full h-48 flex items-center justify-center">
             {dadosEvolucao.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width="99%" height={192}>
-                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
+              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
+                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: isPrinting ? 5 : 25, left: isPrinting ? -35 : -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b62f0" stopOpacity={0.2} />
@@ -790,7 +803,7 @@ export default function Relatorios() {
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <Tooltip formatter={(v) => fmtBRL(Number(v))} labelStyle={{ color: '#64748b' }} />
-                  <Area type="monotone" dataKey="valor" stroke="#3b62f0" strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" />
+                  <Area type="monotone" dataKey="valor" stroke="#3b62f0" strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" isAnimationActive={!isPrinting} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -800,20 +813,20 @@ export default function Relatorios() {
         {/* Tendência e Inflação de Preços */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Inflação (R$/L Médio)</h3>
-          <div className="w-full h-48">
+          <div className="w-full h-48 flex items-center justify-center">
             {dadosPrecoCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados de preço</div>
             ) : (
-              <ResponsiveContainer width="99%" height={192}>
-                <LineChart data={dadosPrecoCombustivel} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
+              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
+                <LineChart data={dadosPrecoCombustivel} margin={{ top: 5, right: isPrinting ? 5 : 25, left: isPrinting ? -35 : -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <Tooltip formatter={(v) => fmtBRL(Number(v))} labelStyle={{ color: '#64748b' }} />
                   <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="Gasolina" stroke="#3b62f0" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="Etanol" stroke="#10b981" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="Diesel" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="Gasolina" stroke="#3b62f0" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
+                  <Line type="monotone" dataKey="Etanol" stroke="#10b981" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
+                  <Line type="monotone" dataKey="Diesel" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -1060,12 +1073,12 @@ export default function Relatorios() {
           <div>
             <div className="border-t border-slate-400 w-64 mx-auto pt-2"></div>
             <div className="font-bold text-slate-800">Gestor de Frota</div>
-            <div className="text-slate-400 mt-1">Marco Aurélio</div>
+            <div className="text-slate-400 mt-1">Jose Paulo</div>
           </div>
           <div>
             <div className="border-t border-slate-400 w-64 mx-auto pt-2"></div>
             <div className="font-bold text-slate-800">Diretor Responsável</div>
-            <div className="text-slate-400 mt-1">Assinatura / Autorização</div>
+            <div className="text-slate-400 mt-1">Marco Aurélio</div>
           </div>
         </div>
       </div>
