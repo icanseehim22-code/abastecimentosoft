@@ -155,11 +155,11 @@ export default function Eficiencia() {
                   <tr key={r.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
                     <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{r.nome}</td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400">{r.kmL ? `${fmtNum(r.kmL, 1)} km/l` : '—'}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-rose-600 dark:text-rose-450">{r.rsKm ? fmtBRL(r.rsKm) : '—'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-rose-600 dark:text-rose-400">{r.rsKm ? fmtBRL(r.rsKm) : '—'}</td>
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtNum(r.kmRodado, 0)} km</td>
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtNum(r.litros)} L</td>
                     <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtBRL(r.valor)}</td>
-                    <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-450">{r.n}</td>
+                    <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{r.n}</td>
                   </tr>
                 ))}
               </tbody>

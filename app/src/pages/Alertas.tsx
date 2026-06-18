@@ -98,7 +98,7 @@ export default function Alertas() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-850 dark:text-slate-100">{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
                     <span className={`rounded-full border px-2 py-0.5 text-xs ${SEV[a.severidade]}`}>{a.severidade}</span>
                     {a.resolvido && (
                       <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-950/40 dark:text-green-400">

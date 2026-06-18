@@ -54,7 +54,7 @@ export default function Motoristas() {
                 <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
                   <span className="inline-flex items-center gap-2"><User className="h-4 w-4 text-slate-400 dark:text-slate-500" />{m.nome}</span>
                 </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{m.telefone || '—'}</td>
+                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{m.telefone || '—'}</td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${m.ativo ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                     {m.ativo ? 'Ativo' : 'Inativo'}

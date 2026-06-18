@@ -148,10 +148,10 @@ export default function Veiculos() {
                       )}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{v.placa}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{v.combustivel_padrao || '—'}</td>
-                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-350">{v.capacidade_tanque ? fmtNum(v.capacidade_tanque, 0) : '—'}</td>
-                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-350">{currentVeiculoKm ? fmtNum(currentVeiculoKm, 0) : '—'}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{v.placa}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{v.combustivel_padrao || '—'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">{v.capacidade_tanque ? fmtNum(v.capacidade_tanque, 0) : '—'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">{currentVeiculoKm ? fmtNum(currentVeiculoKm, 0) : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${v.ativo ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                       {v.ativo ? 'Ativo' : 'Inativo'}
@@ -253,9 +253,9 @@ export default function Veiculos() {
 
             {/* Listagem de Regras */}
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-750 dark:text-slate-300 uppercase tracking-wider">Serviços Programados</h3>
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Serviços Programados</h3>
               {regras.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-450 text-sm">
+                <div className="text-center py-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-sm">
                   Nenhum serviço programado para este veículo.
                 </div>
               ) : (
@@ -269,7 +269,7 @@ export default function Veiculos() {
                     return (
                       <div key={r.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 flex justify-between items-center shadow-sm">
                         <div className="space-y-1">
-                          <div className="font-semibold text-slate-850 dark:text-slate-200 flex items-center gap-1.5">
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                             {r.nome}
                             {isVencido ? (
                               <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xxs font-bold text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">Vencida</span>

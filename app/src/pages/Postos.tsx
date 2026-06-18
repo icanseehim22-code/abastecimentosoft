@@ -117,7 +117,7 @@ export default function Postos() {
                       {p.nome}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-350">{p.cnpj || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.cnpj || '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${p.ativo ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                       {p.ativo ? 'Ativo' : 'Inativo'}
@@ -146,7 +146,7 @@ export default function Postos() {
         </div>
 
         {Object.keys(postosEconomia).length === 0 ? (
-          <div className="text-center py-8 text-slate-450 text-sm">
+          <div className="text-center py-8 text-slate-400 text-sm">
             Sem abastecimentos recentes registrados com postos cadastrados para gerar análise comparativa.
           </div>
         ) : (
@@ -170,12 +170,12 @@ export default function Postos() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-emerald-50/50 dark:bg-emerald-950/10 p-3 rounded-lg border border-emerald-100/50 dark:border-emerald-900/20">
                       <div className="text-xxs text-emerald-600 dark:text-emerald-400 font-semibold uppercase">Mais Barato</div>
-                      <div className="font-bold text-slate-850 dark:text-slate-100 text-sm truncate mt-1">{maisBarato.posto}</div>
+                      <div className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate mt-1">{maisBarato.posto}</div>
                       <div className="text-xs text-slate-500 font-medium mt-0.5">{fmtBRL(maisBarato.precoMedio)}/L</div>
                     </div>
                     <div className="bg-rose-50/30 dark:bg-rose-950/10 p-3 rounded-lg border border-rose-100/50 dark:border-rose-900/20">
-                      <div className="text-xxs text-rose-600 dark:text-rose-450 font-semibold uppercase">Mais Caro</div>
-                      <div className="font-bold text-slate-850 dark:text-slate-100 text-sm truncate mt-1">{maisCaro.posto}</div>
+                      <div className="text-xxs text-rose-600 dark:text-rose-400 font-semibold uppercase">Mais Caro</div>
+                      <div className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate mt-1">{maisCaro.posto}</div>
                       <div className="text-xs text-slate-500 font-medium mt-0.5">{fmtBRL(maisCaro.precoMedio)}/L</div>
                     </div>
                   </div>
@@ -186,7 +186,7 @@ export default function Postos() {
                     <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
                       {ranking.map((item, index) => (
                         <div key={item.posto} className="flex justify-between items-center text-xs py-1 border-b border-slate-50 dark:border-slate-800/40">
-                          <span className="text-slate-650 dark:text-slate-350 flex items-center gap-1.5">
+                          <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                             <span className="font-bold text-slate-400 w-4">{index + 1}º</span>
                             {item.posto}
                           </span>

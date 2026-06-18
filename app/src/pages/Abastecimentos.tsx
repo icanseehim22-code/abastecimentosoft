@@ -132,9 +132,9 @@ export default function Abastecimentos() {
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.combustivel}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.posto || '—'}</td>
                 <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{r.km ? fmtNum(r.km, 0) : '—'}</td>
-                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-350">{fmtNum(r.litros)}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtNum(r.litros)}</td>
                 <td className="px-4 py-3 text-right font-medium text-slate-800 dark:text-slate-200">{fmtBRL(r.valor)}</td>
-                <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-450">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
+                <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" onClick={() => abrirEdicao(r)}><Pencil className="h-4 w-4" /></button>
                   <button className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400" onClick={() => excluir(r)}><Trash2 className="h-4 w-4" /></button>

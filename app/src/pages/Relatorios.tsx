@@ -514,7 +514,7 @@ export default function Relatorios() {
         <div className="flex items-center gap-2">
           <button
             onClick={exportarCSV}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <Download className="h-4 w-4" /> Exportar CSV
           </button>
@@ -569,7 +569,7 @@ export default function Relatorios() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm md:col-span-2 flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider flex items-center gap-1.5">
+            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Target className="h-4.5 w-4.5 text-brand-500" /> Projeção de Orçamento (Burn Rate)
             </h2>
             <div className="flex items-center gap-2">
@@ -614,7 +614,7 @@ export default function Relatorios() {
 
             {/* Informações Textuais */}
             <div className="space-y-2 flex-1">
-              <p className="text-sm text-slate-650 dark:text-slate-350">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 Gasto diário médio de **{fmtBRL(projecaoOrcamento.dailyRate)}/dia**. 
                 Neste ritmo, o consumo mensal estimado é de **{fmtBRL(projecaoOrcamento.projectedSpend)}** para o limite estabelecido de {fmtBRL(limiteVerbaEfetivo)}.
               </p>
@@ -633,7 +633,7 @@ export default function Relatorios() {
 
         {/* METAS ATIVAS BANCO DO MÊS (REFERÊNCIA DE CONSULTA) */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col justify-between">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-3">
             Metas do Mês ({parsedPeriod.month}/{parsedPeriod.year})
           </h2>
           <div className="mt-3 space-y-2 flex-1 max-h-32 overflow-y-auto">
@@ -642,7 +642,7 @@ export default function Relatorios() {
             ) : (
               metas.map((m) => (
                 <div key={m.id} className="flex justify-between items-center text-xs py-1 border-b border-slate-50 dark:border-slate-800/30">
-                  <span className="text-slate-650 dark:text-slate-400 capitalize">
+                  <span className="text-slate-600 dark:text-slate-400 capitalize">
                     {m.escopo === 'global' ? 'Global' : m.escopo === 'veiculo' ? `Veículo (Placa: ${veiculos.find(v => v.id === m.ref_id)?.placa || '—'})` : 'Motorista'}
                   </span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -717,7 +717,7 @@ export default function Relatorios() {
         <h2 className="text-sm font-bold text-brand-800 dark:text-brand-400 uppercase tracking-wider flex items-center gap-2 mb-3">
           <Award className="h-4.5 w-4.5" /> Insights da Diretoria
         </h2>
-        <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-350">
+        <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
           {insights.map((ins, index) => (
             <li key={index} className="flex items-start gap-2">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500"></span>
@@ -899,14 +899,14 @@ export default function Relatorios() {
                           <span className="text-xxs text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-750 dark:text-slate-350">{fmtBRL(s.valorTotal)}</td>
-                      <td className="px-4 py-3 text-right text-slate-750 dark:text-slate-350 font-medium">
+                      <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300">{fmtBRL(s.valorTotal)}</td>
+                      <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-medium">
                         {s.custoPorOS ? fmtBRL(s.custoPorOS) : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-650 dark:text-slate-400">
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
                         {s.kmPorOS ? `${s.kmPorOS.toFixed(1)} km/OS` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-650 dark:text-slate-400">
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
                         {s.os > 0 ? `${s.osPorLitro.toFixed(3)}` : '—'}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -967,10 +967,10 @@ export default function Relatorios() {
                       <td className="px-4 py-3 text-center font-bold text-slate-700">
                         {medal ? <span className="text-lg">{medal}</span> : `${index + 1}º`}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-slate-850 dark:text-slate-200">{m.nome}</td>
-                      <td className="px-4 py-3 text-right text-slate-650 dark:text-slate-400">{m.abastecimentosCount}x</td>
-                      <td className="px-4 py-3 text-right text-slate-650 dark:text-slate-400">{fmtNum(m.litrosValidos)} L</td>
-                      <td className="px-4 py-3 text-right text-slate-650 dark:text-slate-400">{fmtNum(m.kmValidos, 0)} km</td>
+                      <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">{m.nome}</td>
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{m.abastecimentosCount}x</td>
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{fmtNum(m.litrosValidos)} L</td>
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{fmtNum(m.kmValidos, 0)} km</td>
                       <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
                         {m.media ? `${m.media.toFixed(2)} km/l` : '—'}
                       </td>
@@ -1017,17 +1017,17 @@ export default function Relatorios() {
                     const ef = eficienciaMap.get(r.id)
                     return (
                       <tr key={r.id} className="hover:bg-slate-50/45 dark:hover:bg-slate-800/20">
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-350">{formatarDataBR(r.data)}</td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{formatarDataBR(r.data)}</td>
                         <td className="px-4 py-3">
                           <span className="font-semibold text-slate-800 dark:text-slate-200">{r.veiculo_nome}</span>
-                          <span className="block text-xxs text-slate-450 dark:text-slate-500">{r.placa}</span>
+                          <span className="block text-xxs text-slate-400 dark:text-slate-500">{r.placa}</span>
                         </td>
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-350">{r.motorista || '—'}</td>
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-350">{r.posto || '—'}</td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.motorista || '—'}</td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.posto || '—'}</td>
                         <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{fmtNum(r.litros)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-350">{fmtBRL(r.valor)}</td>
-                        <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-450">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
-                        <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-455">
+                        <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300">{fmtBRL(r.valor)}</td>
+                        <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{r.preco_litro ? fmtBRL(r.preco_litro) : '—'}</td>
+                        <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
                           {ef && ef.km_rodado && ef.km_rodado > 0 ? `${fmtNum(ef.km_rodado, 0)} km` : '—'}
                         </td>
                         <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-semibold">
@@ -1047,12 +1047,12 @@ export default function Relatorios() {
         <div className="grid grid-cols-2 gap-16 text-center text-xs">
           <div>
             <div className="border-t border-slate-400 w-64 mx-auto pt-2"></div>
-            <div className="font-bold text-slate-850">Gestor de Frota</div>
+            <div className="font-bold text-slate-800">Gestor de Frota</div>
             <div className="text-slate-400 mt-1">Marco Aurélio</div>
           </div>
           <div>
             <div className="border-t border-slate-400 w-64 mx-auto pt-2"></div>
-            <div className="font-bold text-slate-850">Diretor Responsável</div>
+            <div className="font-bold text-slate-800">Diretor Responsável</div>
             <div className="text-slate-400 mt-1">Assinatura / Autorização</div>
           </div>
         </div>

@@ -77,9 +77,9 @@ export default function Dashboard() {
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Dashboard</h1>
         <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
-          <button className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-350" onClick={() => setYm(ymShift(ym, -1))}><ChevronLeft className="h-4 w-4" /></button>
-          <span className="min-w-20 text-center text-sm font-medium capitalize text-slate-850 dark:text-slate-200">{ymLabel(ym)}</span>
-          <button className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-350 disabled:opacity-30" disabled={ym >= ymAtual()} onClick={() => setYm(ymShift(ym, 1))}><ChevronRight className="h-4 w-4" /></button>
+          <button className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-300" onClick={() => setYm(ymShift(ym, -1))}><ChevronLeft className="h-4 w-4" /></button>
+          <span className="min-w-20 text-center text-sm font-medium capitalize text-slate-800 dark:text-slate-200">{ymLabel(ym)}</span>
+          <button className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-300 disabled:opacity-30" disabled={ym >= ymAtual()} onClick={() => setYm(ymShift(ym, 1))}><ChevronRight className="h-4 w-4" /></button>
         </div>
       </div>
 
