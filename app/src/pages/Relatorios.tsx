@@ -267,13 +267,26 @@ export default function Relatorios() {
     const [ano, mes, dia] = dataStr.split('-')
     return `${dia}/${mes}/${ano}`
   }
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          .print-page-break {
+            break-before: page !important;
+            page-break-before: always !important;
+            margin-top: 0 !important;
+            padding-top: 2rem !important;
+          }
+          .print-avoid-break {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+        }
+      `}} />
       {/* CABEÇALHO PARA IMPRESSÃO */}
       <div className="hidden print:block border-b-2 border-slate-800 pb-4 mb-6">
         <div className="flex justify-between items-center">
@@ -472,7 +485,7 @@ export default function Relatorios() {
       </div>
 
       {/* SEÇÃO INTERATIVA: OS x DESEMPENHO */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm">
+      <div className="print-page-break rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm print:border-none print:shadow-none">
         <div className="border-b border-slate-100 dark:border-slate-800 p-5">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
             <FileText className="h-5 w-5 text-brand-500" /> Desempenho Cruzado (Carro x OS Executadas)
@@ -558,7 +571,7 @@ export default function Relatorios() {
       </div>
 
       {/* DETALHAMENTO DE REGISTROS */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm">
+      <div className="print-page-break rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm print:border-none print:shadow-none">
         <div className="border-b border-slate-100 dark:border-slate-800 p-5">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
             <FileText className="h-5 w-5 text-slate-500" /> Registro Detalhado de Abastecimentos
@@ -615,7 +628,7 @@ export default function Relatorios() {
       </div>
 
       {/* ASSINATURAS PARA IMPRESSÃO */}
-      <div className="hidden print:block pt-16">
+      <div className="hidden print:block print-avoid-break pt-16">
         <div className="grid grid-cols-2 gap-16 text-center text-xs">
           <div>
             <div className="border-t border-slate-400 w-64 mx-auto pt-2"></div>
