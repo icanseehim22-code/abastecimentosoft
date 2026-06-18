@@ -50,6 +50,9 @@ export default function Relatorios() {
   // Mapeamento de OS preenchidas manualmente
   const [osMap, setOsMap] = useState<Record<string, number>>({})
 
+  // Veículos desconsiderados no relatório
+  const [excluidos, setExcluidos] = useState<Record<string, boolean>>({})
+
   // Relacionar vw_abastecimentos com vw_eficiencia (pelo ID do abastecimento)
   const eficienciaMap = useMemo(() => {
     const map = new Map<string, typeof eficienciaRows[0]>()
@@ -68,7 +71,7 @@ export default function Relatorios() {
     return list
   }, [abastecimentosRaw, filtros.motoristaId])
 
-  // KPIs Gerais
+  // KPIs Gerais (apenas de veículos incluídos)
   const kpis = useMemo(() => {
     let totalGasto = 0
     let totalLitros = 0
@@ -77,6 +80,8 @@ export default function Relatorios() {
     let kmParaMedia = 0
 
     for (const r of abastecimentos) {
+      if (excluidos[r.veiculo_id]) continue
+
       totalGasto += Number(r.valor)
       totalLitros += Number(r.litros)
 
@@ -100,7 +105,7 @@ export default function Relatorios() {
       kmPorLitroMedio,
       custoPorKm
     }
-  }, [abastecimentos, eficienciaMap])
+  }, [abastecimentos, eficienciaMap, excluidos])
 
   // Estatísticas por veículo para o relatório cruzado com OS
   const veiculoStats = useMemo(() => {
@@ -114,11 +119,13 @@ export default function Relatorios() {
       litrosParaMedia: number
       kmParaMedia: number
       count: number
+      incluido: boolean
     }> = {}
 
     for (const r of abastecimentos) {
       const ef = eficienciaMap.get(r.id)
       const vId = r.veiculo_id
+      const incluido = !excluidos[vId]
 
       if (!stats[vId]) {
         stats[vId] = {
@@ -130,7 +137,8 @@ export default function Relatorios() {
           kmRodadoTotal: 0,
           litrosParaMedia: 0,
           kmParaMedia: 0,
-          count: 0
+          count: 0,
+          incluido
         }
       }
 
@@ -148,12 +156,13 @@ export default function Relatorios() {
       }
     }
 
-    // Calcula a média de OS/Litro para atribuir notas relativas
+    // Calcula a média de OS/Litro para atribuir notas relativas (apenas para veículos incluídos)
     const items = Object.values(stats)
     let totalOS = 0
     let totalLitrosComOS = 0
 
     items.forEach((item) => {
+      if (!item.incluido) return
       const os = osMap[item.veiculoId] || 0
       if (os > 0) {
         totalOS += os
@@ -171,7 +180,7 @@ export default function Relatorios() {
 
       // Cálculo da Nota Relativa
       let nota = '—'
-      if (os > 0 && avgOSPorLitro > 0) {
+      if (item.incluido && os > 0 && avgOSPorLitro > 0) {
         const ratio = osPorLitro / avgOSPorLitro
         if (ratio >= 1.25) nota = 'S (Excelente)'
         else if (ratio >= 0.95) nota = 'A (Bom)'
@@ -188,21 +197,23 @@ export default function Relatorios() {
         nota
       }
     }).sort((a, b) => b.valorTotal - a.valorTotal)
-  }, [abastecimentos, eficienciaMap, osMap])
+  }, [abastecimentos, eficienciaMap, osMap, excluidos])
 
-  // Gráfico 1: Gasto por Combustível
+  // Gráfico 1: Gasto por Combustível (apenas incluídos)
   const dadosCombustivel = useMemo(() => {
     const resumo: Record<string, number> = {}
     for (const r of abastecimentos) {
+      if (excluidos[r.veiculo_id]) continue
       resumo[r.combustivel] = (resumo[r.combustivel] || 0) + Number(r.valor)
     }
     return Object.entries(resumo).map(([name, value]) => ({ name, value }))
-  }, [abastecimentos])
+  }, [abastecimentos, excluidos])
 
-  // Gráfico 2: Evolução de Gastos Diários
+  // Gráfico 2: Evolução de Gastos Diários (apenas incluídos)
   const dadosEvolucao = useMemo(() => {
     const resumo: Record<string, number> = {}
     for (const r of abastecimentos) {
+      if (excluidos[r.veiculo_id]) continue
       const dataFormat = r.data.substring(5, 10).split('-').reverse().join('/') // MM-DD -> DD/MM
       resumo[dataFormat] = (resumo[dataFormat] || 0) + Number(r.valor)
     }
@@ -213,26 +224,27 @@ export default function Relatorios() {
         const [db, mb] = b.date.split('/').map(Number)
         return ma === mb ? da - db : ma - mb
       })
-  }, [abastecimentos])
+  }, [abastecimentos, excluidos])
 
-  // Geração Automática de Insights Executivos
+  // Geração Automática de Insights Executivos (apenas incluídos)
   const insights = useMemo(() => {
     const list: string[] = []
-    if (abastecimentos.length === 0) return ['Sem dados suficientes no período selecionado.']
+    const statsIncluidos = veiculoStats.filter(v => v.incluido)
+    if (statsIncluidos.length === 0) return ['Sem dados suficientes no período selecionado.']
 
     // Custo Médio do Litro
     const precoMedioL = kpis.totalLitros > 0 ? kpis.totalGasto / kpis.totalLitros : 0
     list.push(`Custo Médio: O preço médio pago por litro de combustível foi de **R$ ${precoMedioL.toFixed(2)}** no período.`)
 
     // Veículo com maior gasto
-    if (veiculoStats.length > 0) {
-      const topGasto = veiculoStats[0]
+    if (statsIncluidos.length > 0) {
+      const topGasto = statsIncluidos[0]
       const pct = kpis.totalGasto > 0 ? (topGasto.valorTotal / kpis.totalGasto) * 100 : 0
       list.push(`Maior Despesa: O veículo **${topGasto.nome}** (${topGasto.placa}) liderou os custos, representando **R$ ${fmtNum(topGasto.valorTotal)}** (${pct.toFixed(1)}% do total).`)
     }
 
     // Veículo mais econômico
-    const comMedia = veiculoStats.filter(v => v.kmParaMedia > 0 && v.litrosParaMedia > 0)
+    const comMedia = statsIncluidos.filter(v => v.kmParaMedia > 0 && v.litrosParaMedia > 0)
     if (comMedia.length > 0) {
       const melhorKml = [...comMedia].sort((a, b) => (b.kmParaMedia / b.litrosParaMedia) - (a.kmParaMedia / a.litrosParaMedia))[0]
       const piorKml = [...comMedia].sort((a, b) => (a.kmParaMedia / a.litrosParaMedia) - (b.kmParaMedia / b.litrosParaMedia))[0]
@@ -244,7 +256,7 @@ export default function Relatorios() {
     }
 
     // Cruzamento com OS
-    const comOS = veiculoStats.filter(v => v.os > 0)
+    const comOS = statsIncluidos.filter(v => v.os > 0)
     if (comOS.length > 0) {
       // Melhor Custo por OS
       const melhorCustoOS = [...comOS].sort((a, b) => (a.custoPorOS || 0) - (b.custoPorOS || 0))[0]
@@ -499,6 +511,7 @@ export default function Relatorios() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-900/50 text-left text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
               <tr>
+                <th className="px-4 py-3 print:hidden w-10"></th>
                 <th className="px-4 py-3">Veículo / Técnico</th>
                 <th className="px-4 py-3 print:w-16 w-32">Nº de OS</th>
                 <th className="px-4 py-3 text-right">Custo Total</th>
@@ -511,10 +524,23 @@ export default function Relatorios() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {veiculoStats.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Nenhum veículo ativo no período.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Nenhum veículo ativo no período.</td></tr>
               ) : (
                 veiculoStats.map((s) => (
-                  <tr key={s.veiculoId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20">
+                  <tr key={s.veiculoId} className={`${s.incluido ? '' : 'opacity-40 print:hidden'} hover:bg-slate-50/40 dark:hover:bg-slate-800/20`}>
+                    <td className="px-4 py-3 print:hidden">
+                      <input
+                        type="checkbox"
+                        checked={s.incluido}
+                        onChange={(e) => {
+                          setExcluidos({
+                            ...excluidos,
+                            [s.veiculoId]: !e.target.checked
+                          })
+                        }}
+                        className="rounded accent-brand-600 cursor-pointer h-4 w-4"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-800 dark:text-slate-200">{s.nome}</div>
                       <div className="text-xs text-slate-400 dark:text-slate-500">{s.placa} • {s.count} abastecimentos</div>
@@ -595,13 +621,15 @@ export default function Relatorios() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {abastecimentos.length === 0 ? (
+              {abastecimentos.filter(r => !excluidos[r.veiculo_id]).length === 0 ? (
                 <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Nenhum registro correspondente aos filtros.</td></tr>
               ) : (
-                abastecimentos.map((r) => {
-                  const ef = eficienciaMap.get(r.id)
-                  return (
-                    <tr key={r.id} className="hover:bg-slate-50/45 dark:hover:bg-slate-800/20">
+                abastecimentos
+                  .filter(r => !excluidos[r.veiculo_id])
+                  .map((r) => {
+                    const ef = eficienciaMap.get(r.id)
+                    return (
+                      <tr key={r.id} className="hover:bg-slate-50/45 dark:hover:bg-slate-800/20">
                       <td className="px-4 py-3 text-slate-700 dark:text-slate-350">{formatarDataBR(r.data)}</td>
                       <td className="px-4 py-3">
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{r.veiculo_nome}</span>
