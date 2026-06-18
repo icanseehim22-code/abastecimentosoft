@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2, Search, Fuel } from 'lucide-react'
 import {
   useAbastecimentos, useVeiculos, useMotoristas,
-  useUpsertAbastecimento, useDeleteAbastecimento, type FiltrosAbast,
+  useUpsertAbastecimento, useDeleteAbastecimento, usePostos, type FiltrosAbast,
 } from '../lib/queries'
 import type { Abastecimento, AbastecimentoView } from '../types'
 import { fmtBRL, fmtNum, fmtDataBR, hojeISO, COMBUSTIVEIS } from '../lib/format'
@@ -23,6 +23,7 @@ export default function Abastecimentos() {
   const { data: lista = [], isLoading } = useAbastecimentos(filtros)
   const { data: veiculos = [] } = useVeiculos()
   const { data: motoristas = [] } = useMotoristas()
+  const { data: postos = [] } = usePostos()
   const upsert = useUpsertAbastecimento()
   const del = useDeleteAbastecimento()
   const [edit, setEdit] = useState<FormAbast | null>(null)
@@ -36,7 +37,7 @@ export default function Abastecimentos() {
     setEdit({
       id: r.id, data: r.data, veiculo_id: r.veiculo_id, motorista_id: r.motorista_id,
       motorista_nome: r.motorista, combustivel: r.combustivel, km: r.km,
-      litros: r.litros, valor: r.valor, autorizado_por: r.autorizado_por,
+      litros: r.litros, valor: r.valor, posto: r.posto, autorizado_por: r.autorizado_por,
       observacao: r.observacao, origem: r.origem,
     })
   }
@@ -104,6 +105,7 @@ export default function Abastecimentos() {
               <th className="px-4 py-3">Veículo</th>
               <th className="px-4 py-3">Motorista</th>
               <th className="px-4 py-3">Comb.</th>
+              <th className="px-4 py-3">Posto</th>
               <th className="px-4 py-3 text-right">KM</th>
               <th className="px-4 py-3 text-right">Litros</th>
               <th className="px-4 py-3 text-right">Valor</th>
@@ -113,10 +115,10 @@ export default function Abastecimentos() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {isLoading && (
-              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Carregando…</td></tr>
+              <tr><td colSpan={10} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Carregando…</td></tr>
             )}
             {!isLoading && lista.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400 dark:text-slate-500">
+              <tr><td colSpan={10} className="px-4 py-10 text-center text-slate-400 dark:text-slate-500">
                 <Fuel className="mx-auto mb-2 h-8 w-8 text-slate-500" />Nenhum abastecimento encontrado.
               </td></tr>
             )}
@@ -126,6 +128,7 @@ export default function Abastecimentos() {
                 <td className="px-4 py-3"><div className="font-medium text-slate-800 dark:text-slate-200">{r.veiculo_nome}</div><div className="text-xs text-slate-400 dark:text-slate-500">{r.placa}</div></td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.motorista || '—'}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.combustivel}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{r.posto || '—'}</td>
                 <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{r.km ? fmtNum(r.km, 0) : '—'}</td>
                 <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-350">{fmtNum(r.litros)}</td>
                 <td className="px-4 py-3 text-right font-medium text-slate-800 dark:text-slate-200">{fmtBRL(r.valor)}</td>
@@ -181,10 +184,17 @@ export default function Abastecimentos() {
                 <Input type="number" step="0.01" value={edit.valor ?? ''} onChange={(e) => setEdit({ ...edit, valor: e.target.value ? Number(e.target.value) : undefined })} />
               </Field>
             </div>
-            <Field label="Autorizado por">
-              <Input list="autorizadores" value={edit.autorizado_por ?? ''} onChange={(e) => setEdit({ ...edit, autorizado_por: e.target.value })} />
-              <datalist id="autorizadores">{AUTORIZADORES.map((a) => <option key={a} value={a} />)}</datalist>
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Posto">
+                <Input list="postos" placeholder="Ex: Posto Ipiranga Centro"
+                  value={edit.posto ?? ''} onChange={(e) => setEdit({ ...edit, posto: e.target.value || null })} />
+                <datalist id="postos">{postos.map((p) => <option key={p} value={p} />)}</datalist>
+              </Field>
+              <Field label="Autorizado por">
+                <Input list="autorizadores" value={edit.autorizado_por ?? ''} onChange={(e) => setEdit({ ...edit, autorizado_por: e.target.value })} />
+                <datalist id="autorizadores">{AUTORIZADORES.map((a) => <option key={a} value={a} />)}</datalist>
+              </Field>
+            </div>
             <Field label="Observação">
               <Textarea rows={2} value={edit.observacao ?? ''} onChange={(e) => setEdit({ ...edit, observacao: e.target.value })} />
             </Field>

@@ -96,6 +96,32 @@ export function useUpsertAbastecimento() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['abastecimentos'] })
       qc.invalidateQueries({ queryKey: ['alertas'] })
+      qc.invalidateQueries({ queryKey: ['postos'] })
+    },
+  })
+}
+
+/**
+ * Lista de postos já usados (valores distintos), para autocomplete no
+ * formulário e seleção na análise. Resiliente: se a coluna `posto` ainda não
+ * existir no banco, retorna vazio em vez de quebrar a tela.
+ */
+export function usePostos() {
+  return useQuery({
+    queryKey: ['postos'],
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from('abastecimentos')
+        .select('posto')
+        .not('posto', 'is', null)
+        .limit(5000)
+      if (error) return []
+      const set = new Set<string>()
+      for (const r of (data as { posto: string | null }[]) ?? []) {
+        const p = r.posto?.trim()
+        if (p) set.add(p)
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'))
     },
   })
 }

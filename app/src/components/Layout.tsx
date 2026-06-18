@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Fuel, Car, Users, Gauge, Target,
-  AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes
+  AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes, Building2
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useAlertas } from '../lib/queries'
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/veiculos', label: 'Veículos', icon: Car },
   { to: '/motoristas', label: 'Motoristas', icon: Users },
   { to: '/eficiencia', label: 'Eficiência', icon: Gauge },
+  { to: '/analise-postos', label: 'Análise de Posto', icon: Building2 },
   { to: '/metas', label: 'Custos & Metas', icon: Target },
   { to: '/alertas', label: 'Alertas', icon: AlertTriangle },
   { to: '/relatorios', label: 'Relatórios', icon: FileText },

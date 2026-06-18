@@ -42,6 +42,7 @@ export interface Abastecimento {
   litros: number
   valor: number
   preco_litro: number | null
+  posto: string | null
   autorizado_por: string | null
   observacao: string | null
   origem: 'bot' | 'web'
