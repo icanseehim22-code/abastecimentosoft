@@ -113,3 +113,12 @@ export interface AlertaView extends Alerta {
   veiculo: { nome: string; placa: string } | null
   abastecimento: { data: string; litros: number; valor: number; combustivel: string } | null
 }
+
+export interface RegraManutencao {
+  id: string
+  veiculo_id: string
+  nome: string
+  intervalo_km: number
+  ultimo_realizado_km: number
+  created_at: string
+}

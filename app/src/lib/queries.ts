@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import type { Veiculo, Motorista, Posto, Abastecimento, AbastecimentoView, EficienciaRow, Meta, AlertaView } from '../types'
+import type { Veiculo, Motorista, Posto, Abastecimento, AbastecimentoView, EficienciaRow, Meta, AlertaView, RegraManutencao } from '../types'
 
 // ── Veículos ─────────────────────────────────────────────────────────────────
 export function useVeiculos(incluirInativos = false) {
@@ -225,5 +225,41 @@ export function useDeleteAbastecimento() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['abastecimentos'] }),
+  })
+}
+
+// ── Regras de Manutenção Preventiva ──────────────────────────────────────────
+export function useRegrasManutencao(veiculoId?: string) {
+  return useQuery({
+    queryKey: ['regras_manutencao', veiculoId],
+    queryFn: async (): Promise<RegraManutencao[]> => {
+      let q = supabase.from('regras_manutencao').select('*').order('nome')
+      if (veiculoId) q = q.eq('veiculo_id', veiculoId)
+      const { data, error } = await q
+      if (error) throw error
+      return data as RegraManutencao[]
+    },
+  })
+}
+
+export function useUpsertRegraManutencao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (rm: Partial<RegraManutencao>) => {
+      const { error } = await supabase.from('regras_manutencao').upsert(rm).select()
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['regras_manutencao'] }),
+  })
+}
+
+export function useDeleteRegraManutencao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('regras_manutencao').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['regras_manutencao'] }),
   })
 }

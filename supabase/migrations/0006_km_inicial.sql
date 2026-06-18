@@ -1,6 +1,9 @@
 -- Adiciona coluna de KM inicial em veiculos
 alter table public.veiculos add column if not exists km_inicial integer;
 
+-- Remove a view antiga para evitar erro de redefinição de colunas/ordem
+drop view if exists public.vw_eficiencia cascade;
+
 -- Recria a view vw_eficiencia utilizando coalesce(lag(km), km_inicial)
 create or replace view public.vw_eficiencia
 with (security_invoker = on) as
