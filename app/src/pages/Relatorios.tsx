@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid
+  AreaChart, Area, XAxis, YAxis, CartesianGrid
 } from 'recharts'
 import {
   FileText, Printer, Fuel, DollarSign, TrendingUp, Award,
@@ -427,38 +427,7 @@ export default function Relatorios() {
       })
   }, [abastecimentos, excluidos])
 
-  // Gráfico 3: Histórico de Preços por Litro (Tendência / Inflação)
-  const dadosPrecoCombustivel = useMemo(() => {
-    const dataGroups: Record<string, Record<string, { totalPreco: number; count: number }>> = {}
 
-    for (const r of abastecimentos) {
-      if (excluidos[r.veiculo_id] || !r.preco_litro) continue
-      const dateStr = r.data.substring(5, 10).split('-').reverse().join('/')
-
-      if (!dataGroups[dateStr]) dataGroups[dateStr] = {}
-      if (!dataGroups[dateStr][r.combustivel]) {
-        dataGroups[dateStr][r.combustivel] = { totalPreco: 0, count: 0 }
-      }
-
-      const g = dataGroups[dateStr][r.combustivel]
-      g.totalPreco += Number(r.preco_litro)
-      g.count += 1
-    }
-
-    return Object.entries(dataGroups)
-      .map(([date, combs]) => {
-        const row: any = { date }
-        for (const [comb, data] of Object.entries(combs)) {
-          row[comb] = data.count > 0 ? Number((data.totalPreco / data.count).toFixed(3)) : null
-        }
-        return row
-      })
-      .sort((a, b) => {
-        const [da, ma] = a.date.split('/').map(Number)
-        const [db, mb] = b.date.split('/').map(Number)
-        return ma === mb ? da - db : ma - mb
-      })
-  }, [abastecimentos, excluidos])
 
   // Geração Automática de Insights Executivos (apenas incluídos)
   const insights = useMemo(() => {
@@ -572,6 +541,13 @@ export default function Relatorios() {
           .print-avoid-break {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+          }
+          table {
+            width: 100% !important;
+            font-size: 10px !important;
+          }
+          th, td {
+            padding: 4px 6px !important;
           }
         }
       `}} />
@@ -813,7 +789,7 @@ export default function Relatorios() {
       </div>
 
       {/* GRÁFICOS */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 print:grid-cols-3 print:gap-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 print:grid-cols-2 print:gap-4">
         {/* Distribuição por Combustível */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Gastos por Combustível</h3>
@@ -821,14 +797,14 @@ export default function Relatorios() {
             {dadosCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
+              <ResponsiveContainer width={isPrinting ? 260 : "99%"} height={192}>
                 <PieChart>
                   <Pie
                     data={dadosCombustivel}
                     cx="50%"
                     cy="50%"
-                    innerRadius={isPrinting ? 30 : 45}
-                    outerRadius={isPrinting ? 45 : 65}
+                    innerRadius={45}
+                    outerRadius={65}
                     paddingAngle={3}
                     dataKey="value"
                     isAnimationActive={!isPrinting}
@@ -852,8 +828,8 @@ export default function Relatorios() {
             {dadosEvolucao.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
-                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: isPrinting ? 5 : 25, left: isPrinting ? -35 : -20, bottom: 0 }}>
+              <ResponsiveContainer width={isPrinting ? 260 : "99%"} height={192}>
+                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b62f0" stopOpacity={0.2} />
@@ -866,29 +842,6 @@ export default function Relatorios() {
                   <Tooltip formatter={(v) => fmtBRL(Number(v))} labelStyle={{ color: '#64748b' }} />
                   <Area type="monotone" dataKey="valor" stroke="#3b62f0" strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" isAnimationActive={!isPrinting} />
                 </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Tendência e Inflação de Preços */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
-          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Inflação (R$/L Médio)</h3>
-          <div className="w-full h-48 flex items-center justify-center">
-            {dadosPrecoCombustivel.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados de preço</div>
-            ) : (
-              <ResponsiveContainer width={isPrinting ? 170 : "99%"} height={192}>
-                <LineChart data={dadosPrecoCombustivel} margin={{ top: 5, right: isPrinting ? 5 : 25, left: isPrinting ? -35 : -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <Tooltip formatter={(v) => fmtBRL(Number(v))} labelStyle={{ color: '#64748b' }} />
-                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="Gasolina" stroke="#3b62f0" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
-                  <Line type="monotone" dataKey="Etanol" stroke="#10b981" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
-                  <Line type="monotone" dataKey="Diesel" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls isAnimationActive={!isPrinting} />
-                </LineChart>
               </ResponsiveContainer>
             )}
           </div>
