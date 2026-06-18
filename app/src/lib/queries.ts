@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import type { Veiculo, Motorista, Abastecimento, AbastecimentoView, EficienciaRow, Meta, AlertaView } from '../types'
+import type { Veiculo, Motorista, Posto, Abastecimento, AbastecimentoView, EficienciaRow, Meta, AlertaView } from '../types'
 
 // ── Veículos ─────────────────────────────────────────────────────────────────
 export function useVeiculos(incluirInativos = false) {
@@ -102,26 +102,31 @@ export function useUpsertAbastecimento() {
 }
 
 /**
- * Lista de postos já usados (valores distintos), para autocomplete no
- * formulário e seleção na análise. Resiliente: se a coluna `posto` ainda não
- * existir no banco, retorna vazio em vez de quebrar a tela.
+ * Lista de postos cadastrados para autocomplete e formulários.
  */
-export function usePostos() {
+export function usePostos(incluirInativos = false) {
   return useQuery({
-    queryKey: ['postos'],
-    queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase
-        .from('abastecimentos')
-        .select('posto')
-        .not('posto', 'is', null)
-        .limit(5000)
-      if (error) return []
-      const set = new Set<string>()
-      for (const r of (data as { posto: string | null }[]) ?? []) {
-        const p = r.posto?.trim()
-        if (p) set.add(p)
-      }
-      return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    queryKey: ['postos', incluirInativos],
+    queryFn: async (): Promise<Posto[]> => {
+      let q = supabase.from('postos').select('*').order('nome')
+      if (!incluirInativos) q = q.eq('ativo', true)
+      const { data, error } = await q
+      if (error) throw error
+      return data as Posto[]
+    },
+  })
+}
+
+export function useUpsertPosto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (p: Partial<Posto>) => {
+      const { error } = await supabase.from('postos').upsert(p).select()
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['postos'] })
+      qc.invalidateQueries({ queryKey: ['abastecimentos'] })
     },
   })
 }

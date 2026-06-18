@@ -37,17 +37,19 @@ export default function Abastecimentos() {
     setEdit({
       id: r.id, data: r.data, veiculo_id: r.veiculo_id, motorista_id: r.motorista_id,
       motorista_nome: r.motorista, combustivel: r.combustivel, km: r.km,
-      litros: r.litros, valor: r.valor, posto: r.posto, autorizado_por: r.autorizado_por,
-      observacao: r.observacao, origem: r.origem,
+      litros: r.litros, valor: r.valor, posto: r.posto, posto_id: r.posto_id,
+      autorizado_por: r.autorizado_por, observacao: r.observacao, origem: r.origem,
     })
   }
 
   async function salvar() {
     if (!edit?.veiculo_id || !edit.litros || edit.valor == null || !edit.data) return
     const nomeMot = motoristas.find((m) => m.id === edit.motorista_id)?.nome ?? edit.motorista_nome ?? null
+    const nomePosto = postos.find((p) => p.id === edit.posto_id)?.nome ?? null
     await upsert.mutateAsync({
       ...edit,
       motorista_nome: nomeMot,
+      posto: nomePosto,
       km: edit.km ? Number(edit.km) : null,
       litros: Number(edit.litros),
       valor: Number(edit.valor),
@@ -186,9 +188,10 @@ export default function Abastecimentos() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Field label="Posto">
-                <Input list="postos" placeholder="Ex: Posto Ipiranga Centro"
-                  value={edit.posto ?? ''} onChange={(e) => setEdit({ ...edit, posto: e.target.value || null })} />
-                <datalist id="postos">{postos.map((p) => <option key={p} value={p} />)}</datalist>
+                <Select value={edit.posto_id ?? ''} onChange={(e) => setEdit({ ...edit, posto_id: e.target.value || null })}>
+                  <option value="">Selecione…</option>
+                  {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </Select>
               </Field>
               <Field label="Autorizado por">
                 <Input list="autorizadores" value={edit.autorizado_por ?? ''} onChange={(e) => setEdit({ ...edit, autorizado_por: e.target.value })} />

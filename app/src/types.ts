@@ -31,6 +31,14 @@ export interface Motorista {
   created_at: string
 }
 
+export interface Posto {
+  id: string
+  nome: string
+  cnpj: string | null
+  ativo: boolean
+  created_at: string
+}
+
 export interface Abastecimento {
   id: string
   data: string
@@ -43,6 +51,7 @@ export interface Abastecimento {
   valor: number
   preco_litro: number | null
   posto: string | null
+  posto_id: string | null
   autorizado_por: string | null
   observacao: string | null
   origem: 'bot' | 'web'

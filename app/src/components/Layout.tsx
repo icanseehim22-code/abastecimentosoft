@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Fuel, Car, Users, Gauge, Target,
-  AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes, Building2
+  AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes, Building2,
+  BarChart3
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useAlertas } from '../lib/queries'
@@ -12,8 +13,9 @@ const NAV = [
   { to: '/abastecimentos', label: 'Abastecimentos', icon: Fuel },
   { to: '/veiculos', label: 'Veículos', icon: Car },
   { to: '/motoristas', label: 'Motoristas', icon: Users },
+  { to: '/postos', label: 'Postos', icon: Building2 },
   { to: '/eficiencia', label: 'Eficiência', icon: Gauge },
-  { to: '/analise-postos', label: 'Análise de Posto', icon: Building2 },
+  { to: '/analise-postos', label: 'Análise de Posto', icon: BarChart3 },
   { to: '/metas', label: 'Custos & Metas', icon: Target },
   { to: '/alertas', label: 'Alertas', icon: AlertTriangle },
   { to: '/relatorios', label: 'Relatórios', icon: FileText },
@@ -33,7 +35,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-full bg-slate-50 text-slate-800 dark:bg-[#070b13] dark:text-slate-200 transition-colors duration-200">
-      <aside className="flex w-60 flex-col border-r border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
+      <aside className="print:hidden flex w-60 flex-col border-r border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
         <div className="flex items-center gap-2 px-5 py-4 text-brand-700 dark:text-brand-400">
           <Fuel className="h-6 w-6 animate-pulse" />
           <span className="text-lg font-bold bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent dark:from-brand-400 dark:to-brand-300">
@@ -105,8 +107,8 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-6xl p-6">
+      <main className="flex-1 overflow-auto print:overflow-visible print:bg-white print:text-black">
+        <div className="mx-auto max-w-6xl p-6 print:p-0 print:max-w-full">
           <Outlet />
         </div>
       </main>

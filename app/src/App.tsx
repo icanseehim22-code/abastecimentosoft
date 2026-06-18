@@ -10,6 +10,8 @@ import Eficiencia from './pages/Eficiencia'
 import Metas from './pages/Metas'
 import Alertas from './pages/Alertas'
 import AnalisePostos from './pages/AnalisePostos'
+import Postos from './pages/Postos'
+import Relatorios from './pages/Relatorios'
 import Placeholder from './components/Placeholder'
 
 export default function App() {
@@ -27,11 +29,12 @@ export default function App() {
         <Route path="abastecimentos" element={<Abastecimentos />} />
         <Route path="veiculos" element={<Veiculos />} />
         <Route path="motoristas" element={<Motoristas />} />
+        <Route path="postos" element={<Postos />} />
         <Route path="eficiencia" element={<Eficiencia />} />
         <Route path="analise-postos" element={<AnalisePostos />} />
         <Route path="metas" element={<Metas />} />
         <Route path="alertas" element={<Alertas />} />
-        <Route path="relatorios" element={<Placeholder title="Relatórios" />} />
+        <Route path="relatorios" element={<Relatorios />} />
         <Route path="config" element={<Placeholder title="Configurações" />} />
       </Route>
     </Routes>
