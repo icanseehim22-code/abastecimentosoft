@@ -491,6 +491,9 @@ export default function Relatorios() {
           .recharts-responsive-container {
             width: 100% !important;
           }
+          .recharts-responsive-container svg {
+            width: 100% !important;
+          }
           .recharts-wrapper {
             width: 100% !important;
           }
@@ -739,7 +742,7 @@ export default function Relatorios() {
       {/* GRÁFICOS */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 print:grid-cols-3 print:gap-2">
         {/* Distribuição por Combustível */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Gastos por Combustível</h3>
           <div className="w-full h-48">
             {dadosCombustivel.length === 0 ? (
@@ -769,7 +772,7 @@ export default function Relatorios() {
         </div>
 
         {/* Evolução de Gastos */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Histórico de Gastos</h3>
           <div className="w-full h-48">
             {dadosEvolucao.length === 0 ? (
@@ -795,7 +798,7 @@ export default function Relatorios() {
         </div>
 
         {/* Tendência e Inflação de Preços */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Inflação (R$/L Médio)</h3>
           <div className="w-full h-48">
             {dadosPrecoCombustivel.length === 0 ? (
