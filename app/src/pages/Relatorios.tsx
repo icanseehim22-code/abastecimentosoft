@@ -488,6 +488,15 @@ export default function Relatorios() {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
           }
+          .recharts-responsive-container {
+            width: 100% !important;
+          }
+          .recharts-wrapper {
+            width: 100% !important;
+          }
+          .recharts-surface {
+            width: 100% !important;
+          }
         }
       `}} />
 
@@ -736,7 +745,7 @@ export default function Relatorios() {
             {dadosCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width="100%" height={192}>
+              <ResponsiveContainer width="99%" height={192}>
                 <PieChart>
                   <Pie
                     data={dadosCombustivel}
@@ -766,8 +775,8 @@ export default function Relatorios() {
             {dadosEvolucao.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width="100%" height={192}>
-                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <ResponsiveContainer width="99%" height={192}>
+                <AreaChart data={dadosEvolucao} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b62f0" stopOpacity={0.2} />
@@ -792,8 +801,8 @@ export default function Relatorios() {
             {dadosPrecoCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados de preço</div>
             ) : (
-              <ResponsiveContainer width="100%" height={192}>
-                <LineChart data={dadosPrecoCombustivel} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <ResponsiveContainer width="99%" height={192}>
+                <LineChart data={dadosPrecoCombustivel} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
