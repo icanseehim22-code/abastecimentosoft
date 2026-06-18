@@ -961,7 +961,7 @@ export default function Relatorios() {
       </div>
 
       {/* LEADERBOARD / RANKING DE MOTORISTAS */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm">
+      <div className="print-page-break rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm print:border-none print:shadow-none">
         <div className="border-b border-slate-100 dark:border-slate-800 p-5">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" /> Ranking de Condução Econômica (Leaderboard)
@@ -1009,7 +1009,7 @@ export default function Relatorios() {
       </div>
 
       {/* DETALHAMENTO DE REGISTROS */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm">
+      <div className="print-page-break rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm print:border-none print:shadow-none">
         <div className="border-b border-slate-100 dark:border-slate-800 p-5">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
             <FileText className="h-5 w-5 text-slate-500" /> Registro Detalhado de Abastecimentos
