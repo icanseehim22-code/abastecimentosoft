@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Fuel, Car, Users, Gauge, Target,
-  AlertTriangle, FileText, Settings, LogOut, Sun, Moon
+  AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useAlertas } from '../lib/queries'
@@ -40,6 +40,20 @@ export default function Layout() {
           </span>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-2">
+          {/*
+            Full-page link back to the EstoqueSoftSystem inventory app served at
+            the domain root (/assets), outside this Vite SPA. Uses a plain <a>
+            (not NavLink) so the browser does a real navigation instead of
+            react-router trying to match an internal route.
+          */}
+          <a
+            href="/assets"
+            className="mb-1 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition duration-200 hover:bg-brand-100 dark:border-brand-900/60 dark:bg-brand-950/40 dark:text-brand-400 dark:hover:bg-brand-950/70"
+          >
+            <Boxes className="h-[18px] w-[18px]" />
+            <span className="flex-1">Sistema de Estoque</span>
+          </a>
+          <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
