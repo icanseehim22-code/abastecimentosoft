@@ -12,6 +12,7 @@ import { motion } from 'framer-motion'
 import {
   useAbastecimentos, useEficiencia, useVeiculos, useMotoristas, useMetas
 } from '../lib/queries'
+import { supabase } from '../lib/supabase'
 import { fmtBRL, fmtNum } from '../lib/format'
 import { Select, Input } from '../components/ui/fields'
 
@@ -95,28 +96,88 @@ export default function Relatorios() {
 
   const limiteVerbaEfetivo = metaGlobalBanco ?? verbaGlobal
 
-  // PERSISTÊNCIA DE OS: Carrega/Salva no localStorage do navegador por período
+  // PERSISTÊNCIA DE OS: Carrega/Salva no Supabase (com fallback local no localStorage)
   const [osMap, setOsMap] = useState<Record<string, number>>({})
 
-  const storageKey = useMemo(() => `os_map_${filtros.inicio}_${filtros.fim}`, [filtros.inicio, filtros.fim])
-
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey)
-    if (saved) {
-      try {
-        setOsMap(JSON.parse(saved))
-      } catch {
+    let active = true
+
+    async function carregarOS() {
+      // Primeiro carrega o que estiver no localStorage como fallback rápido
+      const localKey = `os_map_${filtros.inicio}_${filtros.fim}`
+      const savedLocal = localStorage.getItem(localKey)
+      if (savedLocal) {
+        try {
+          setOsMap(JSON.parse(savedLocal))
+        } catch {
+          // ignore
+        }
+      } else {
         setOsMap({})
       }
-    } else {
-      setOsMap({})
-    }
-  }, [storageKey])
 
-  const salvarOS = (veiculoId: string, val: number) => {
+      // Em seguida, busca no Supabase
+      try {
+        const { data, error } = await supabase
+          .from('veiculo_os')
+          .select('veiculo_id, quantidade')
+          .eq('periodo_inicio', filtros.inicio)
+          .eq('periodo_fim', filtros.fim)
+
+        if (error) {
+          console.error('Erro ao buscar OS do Supabase:', error)
+          return
+        }
+
+        if (data && active) {
+          const newMap: Record<string, number> = {}
+          data.forEach((row) => {
+            newMap[row.veiculo_id] = row.quantidade
+          })
+          setOsMap(newMap)
+          // Atualiza o local storage para manter sincronizado offline/fallback
+          localStorage.setItem(localKey, JSON.stringify(newMap))
+        }
+      } catch (err) {
+        console.error('Erro na requisição de OS:', err)
+      }
+    }
+
+    carregarOS()
+
+    return () => {
+      active = false
+    }
+  }, [filtros.inicio, filtros.fim])
+
+  const salvarOS = async (veiculoId: string, val: number) => {
+    // 1. Atualização otimista no estado local e localStorage
     const newMap = { ...osMap, [veiculoId]: val }
     setOsMap(newMap)
-    localStorage.setItem(storageKey, JSON.stringify(newMap))
+
+    const localKey = `os_map_${filtros.inicio}_${filtros.fim}`
+    localStorage.setItem(localKey, JSON.stringify(newMap))
+
+    // 2. Persistência assíncrona no Supabase
+    try {
+      const { error } = await supabase
+        .from('veiculo_os')
+        .upsert({
+          veiculo_id: veiculoId,
+          periodo_inicio: filtros.inicio,
+          periodo_fim: filtros.fim,
+          quantidade: val,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'veiculo_id,periodo_inicio,periodo_fim'
+        })
+
+      if (error) {
+        console.error('Erro ao salvar OS no Supabase:', error)
+      }
+    } catch (err) {
+      console.error('Erro ao enviar OS ao banco:', err)
+    }
   }
 
   // Veículos desconsiderados temporariamente no relatório
