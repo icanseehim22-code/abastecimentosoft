@@ -1,22 +1,22 @@
 import { useMemo, useState } from 'react'
 import {
-  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis,
-  Tooltip, CartesianGrid, Cell,
+  ResponsiveContainer, BarChart, Bar, AreaChart, Area, XAxis, YAxis,
+  Tooltip, CartesianGrid, Cell, LabelList, ReferenceLine,
 } from 'recharts'
 import { Gauge } from 'lucide-react'
 import { useEficiencia, useVeiculos } from '../lib/queries'
 import { fmtBRL, fmtNum, fmtDataBR } from '../lib/format'
 import { soma } from '../lib/analytics'
-import { useTheme } from '../context/ThemeContext'
+import { useChartTheme, ChartTooltip, CHART_COLORS } from '../components/ui/charts'
 import { motion } from 'framer-motion'
 
-const PALETA = ['#16a34a', '#3b62f0', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6']
+const PALETA = CHART_COLORS
 
 export default function Eficiencia() {
   const { data: efi = [], isLoading } = useEficiencia()
   const { data: veiculos = [] } = useVeiculos(true)
   const [sel, setSel] = useState<string>('')
-  const { theme } = useTheme()
+  const ct = useChartTheme()
 
   const nomePorId = useMemo(() => {
     const m = new Map<string, string>()
@@ -48,23 +48,7 @@ export default function Eficiencia() {
   }, [efi, sel])
 
   const chartKmL = ranking.filter((r) => r.kmL != null).map((r) => ({ nome: r.nome, kmL: Number(r.kmL!.toFixed(2)) }))
-
-  const chartTheme = useMemo(() => {
-    const isDark = theme === 'dark'
-    return {
-      grid: isDark ? '#1e293b' : '#eef2f7',
-      text: isDark ? '#94a3b8' : '#64748b',
-      tooltip: {
-        contentStyle: {
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          borderColor: isDark ? '#334155' : '#e2e8f0',
-          borderRadius: '12px',
-        },
-        itemStyle: { color: isDark ? '#f1f5f9' : '#1e293b' },
-        labelStyle: { color: isDark ? '#94a3b8' : '#64748b' }
-      }
-    }
-  }, [theme])
+  const mediaFrota = chartKmL.length ? chartKmL.reduce((s, r) => s + r.kmL, 0) / chartKmL.length : 0
 
   return (
     <motion.div
@@ -85,20 +69,26 @@ export default function Eficiencia() {
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
-              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Consumo médio (km/l) por veículo</h2>
-              <ResponsiveContainer width="100%" height={Math.max(200, chartKmL.length * 34)}>
-                <BarChart data={chartKmL} layout="vertical" margin={{ left: 20, right: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: chartTheme.text }} />
-                  <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: chartTheme.text }} width={70} />
-                  <Tooltip
-                    contentStyle={chartTheme.tooltip.contentStyle}
-                    itemStyle={chartTheme.tooltip.itemStyle}
-                    labelStyle={chartTheme.tooltip.labelStyle}
-                    formatter={(v) => `${fmtNum(Number(v), 1)} km/l`}
-                  />
-                  <Bar dataKey="kmL" radius={[0, 4, 4, 0]}>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Consumo médio (km/l) por veículo</h2>
+                {mediaFrota > 0 && (
+                  <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                    Média frota: {fmtNum(mediaFrota, 1)} km/l
+                  </span>
+                )}
+              </div>
+              <ResponsiveContainer width="100%" height={Math.max(200, chartKmL.length * 38)}>
+                <BarChart data={chartKmL} layout="vertical" margin={{ left: 20, right: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: ct.axis }} width={70} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => `${fmtNum(v, 1)} km/l`} />} />
+                  {mediaFrota > 0 && (
+                    <ReferenceLine x={mediaFrota} stroke="#64748b" strokeDasharray="5 4" strokeWidth={1.5} />
+                  )}
+                  <Bar dataKey="kmL" radius={[0, 6, 6, 0]} maxBarSize={26}>
                     {chartKmL.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
+                    <LabelList dataKey="kmL" position="right" formatter={(v: any) => fmtNum(Number(v), 1)} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -120,18 +110,19 @@ export default function Eficiencia() {
                 <div className="py-20 text-center text-sm text-slate-400 dark:text-slate-500">Selecione um veículo com histórico.</div>
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={serieSel} margin={{ left: -10, right: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-                    <XAxis dataKey="data" tick={{ fontSize: 10, fill: chartTheme.text }} />
-                    <YAxis tick={{ fontSize: 11, fill: chartTheme.text }} />
-                    <Tooltip
-                      contentStyle={chartTheme.tooltip.contentStyle}
-                      itemStyle={chartTheme.tooltip.itemStyle}
-                      labelStyle={chartTheme.tooltip.labelStyle}
-                      formatter={(v) => `${fmtNum(Number(v), 1)} km/l`}
-                    />
-                    <Line dataKey="kmL" stroke="#16a34a" strokeWidth={2} />
-                  </LineChart>
+                  <AreaChart data={serieSel} margin={{ left: -10, right: 8 }}>
+                    <defs>
+                      <linearGradient id="grad-kml" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#16a34a" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} vertical={false} />
+                    <XAxis dataKey="data" tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={ct.cursorLine} content={<ChartTooltip formatter={(v) => `${fmtNum(v, 1)} km/l`} />} />
+                    <Area type="monotone" dataKey="kmL" stroke="#16a34a" strokeWidth={2.5} fill="url(#grad-kml)" dot={{ r: 3, fill: '#16a34a' }} activeDot={{ r: 5 }} name="Consumo" />
+                  </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>

@@ -1,23 +1,24 @@
 import { useMemo, useState } from 'react'
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis,
-  Tooltip, BarChart, CartesianGrid, Cell,
+  Tooltip, BarChart, CartesianGrid, Cell, LabelList,
+  PieChart, Pie, Legend, Area, AreaChart,
 } from 'recharts'
 import { DollarSign, Fuel, Route, Gauge, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAbastecimentos, useEficiencia } from '../lib/queries'
 import { fmtBRL, fmtNum } from '../lib/format'
 import { ymKey, ymLabel, ymAtual, ymShift, ultimosMeses, soma } from '../lib/analytics'
 import KpiCard from '../components/ui/KpiCard'
-import { useTheme } from '../context/ThemeContext'
+import { useChartTheme, ChartTooltip, CHART_COLORS, tickBRLk } from '../components/ui/charts'
 import { motion } from 'framer-motion'
 
-const PALETA = ['#3b62f0', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6']
+const PALETA = CHART_COLORS
 
 export default function Dashboard() {
   const { data: abast = [], isLoading } = useAbastecimentos({})
   const { data: efi = [] } = useEficiencia()
   const [ym, setYm] = useState(ymAtual())
-  const { theme } = useTheme()
+  const ct = useChartTheme()
 
   const kpis = useMemo(() => {
     const mes = abast.filter((a) => ymKey(a.data) === ym)
@@ -40,7 +41,9 @@ export default function Dashboard() {
     const meses = ultimosMeses(12)
     return meses.map((m) => {
       const reg = abast.filter((a) => ymKey(a.data) === m)
-      return { mes: ymLabel(m), valor: soma(reg, (a) => a.valor), litros: soma(reg, (a) => a.litros) }
+      const valor = soma(reg, (a) => a.valor)
+      const litros = soma(reg, (a) => a.litros)
+      return { mes: ymLabel(m), valor, litros, precoMedio: litros > 0 ? valor / litros : null }
     })
   }, [abast])
 
@@ -51,22 +54,12 @@ export default function Dashboard() {
     return [...map.entries()].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor)
   }, [abast, ym])
 
-  const chartTheme = useMemo(() => {
-    const isDark = theme === 'dark'
-    return {
-      grid: isDark ? '#1e293b' : '#eef2f7',
-      text: isDark ? '#94a3b8' : '#64748b',
-      tooltip: {
-        contentStyle: {
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          borderColor: isDark ? '#334155' : '#e2e8f0',
-          borderRadius: '12px',
-        },
-        itemStyle: { color: isDark ? '#f1f5f9' : '#1e293b' },
-        labelStyle: { color: isDark ? '#94a3b8' : '#64748b' }
-      }
-    }
-  }, [theme])
+  const porCombustivel = useMemo(() => {
+    const mes = abast.filter((a) => ymKey(a.data) === ym)
+    const map = new Map<string, number>()
+    for (const a of mes) map.set(a.combustivel, (map.get(a.combustivel) || 0) + Number(a.valor || 0))
+    return [...map.entries()].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor)
+  }, [abast, ym])
 
   return (
     <motion.div
@@ -103,18 +96,23 @@ export default function Dashboard() {
               <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Gasto e litros — últimos 12 meses</h2>
               <ResponsiveContainer width="100%" height={260}>
                 <ComposedChart data={serieMensal} margin={{ left: -10, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: chartTheme.text }} />
-                  <YAxis yAxisId="l" tick={{ fontSize: 11, fill: chartTheme.text }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                  <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11, fill: chartTheme.text }} />
+                  <defs>
+                    <linearGradient id="grad-gasto" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b62f0" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#3b62f0" stopOpacity={0.55} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="l" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+                  <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}L`} />
                   <Tooltip
-                    contentStyle={chartTheme.tooltip.contentStyle}
-                    itemStyle={chartTheme.tooltip.itemStyle}
-                    labelStyle={chartTheme.tooltip.labelStyle}
-                    formatter={(v, n) => (n === 'valor' ? fmtBRL(Number(v)) : `${fmtNum(Number(v))} L`)}
+                    cursor={ct.cursor}
+                    content={<ChartTooltip formatter={(v, n) => (n === 'Gasto' ? fmtBRL(v) : `${fmtNum(v)} L`)} />}
                   />
-                  <Bar yAxisId="l" dataKey="valor" fill="#3b62f0" radius={[4, 4, 0, 0]} name="valor" />
-                  <Line yAxisId="r" dataKey="litros" stroke="#f59e0b" strokeWidth={2} dot={false} name="litros" />
+                  <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                  <Bar yAxisId="l" dataKey="valor" fill="url(#grad-gasto)" radius={[6, 6, 0, 0]} name="Gasto" maxBarSize={38} />
+                  <Line yAxisId="r" dataKey="litros" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3, fill: '#f59e0b' }} activeDot={{ r: 5 }} name="Litros" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -125,22 +123,57 @@ export default function Dashboard() {
                 <div className="py-20 text-center text-sm text-slate-400 dark:text-slate-500">Sem dados no mês.</div>
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={porVeiculo} layout="vertical" margin={{ left: 20, right: 16 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: chartTheme.text }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                    <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: chartTheme.text }} width={70} />
-                    <Tooltip
-                      contentStyle={chartTheme.tooltip.contentStyle}
-                      itemStyle={chartTheme.tooltip.itemStyle}
-                      labelStyle={chartTheme.tooltip.labelStyle}
-                      formatter={(v) => fmtBRL(Number(v))}
-                    />
-                    <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
+                  <BarChart data={porVeiculo} layout="vertical" margin={{ left: 20, right: 48 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+                    <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: ct.axis }} width={70} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
+                    <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={26}>
                       {porVeiculo.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
+                      <LabelList dataKey="valor" position="right" formatter={(v: any) => fmtBRL(Number(v))} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Gasto por combustível — {ymLabel(ym)}</h2>
+              {porCombustivel.length === 0 ? (
+                <div className="py-20 text-center text-sm text-slate-400 dark:text-slate-500">Sem dados no mês.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={porCombustivel} dataKey="valor" nameKey="nome" cx="50%" cy="50%"
+                      innerRadius={58} outerRadius={92} paddingAngle={3} stroke="none">
+                      {porCombustivel.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip hideLabel formatter={(v, n) => `${n}: ${fmtBRL(v)}`} />} />
+                    <Legend verticalAlign="bottom" height={28} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Preço médio do litro — últimos 12 meses</h2>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={serieMensal} margin={{ left: -6, right: 8 }}>
+                  <defs>
+                    <linearGradient id="grad-preco" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#16a34a" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtBRL(v)} width={70} domain={['auto', 'auto']} />
+                  <Tooltip cursor={ct.cursorLine} content={<ChartTooltip formatter={(v) => `${fmtBRL(v)} / L`} />} />
+                  <Area type="monotone" dataKey="precoMedio" stroke="#16a34a" strokeWidth={2.5} fill="url(#grad-preco)" connectNulls dot={{ r: 3, fill: '#16a34a' }} activeDot={{ r: 5 }} name="R$/L" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </>

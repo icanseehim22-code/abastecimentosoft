@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar, LabelList
 } from 'recharts'
 import {
   FileText, Printer, Fuel, DollarSign, TrendingUp, Award,
@@ -15,11 +15,13 @@ import {
 import { supabase } from '../lib/supabase'
 import { fmtBRL, fmtNum } from '../lib/format'
 import { Select, Input } from '../components/ui/fields'
+import { useChartTheme, ChartTooltip, CHART_COLORS, tickBRLk } from '../components/ui/charts'
 
-const CORES_PIE = ['#3b62f0', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
+const CORES_PIE = ['#3b62f0', '#16a34a', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
 
 export default function Relatorios() {
   const [isPrinting, setIsPrinting] = useState(false)
+  const ct = useChartTheme()
 
   useEffect(() => {
     const handleBeforePrint = () => {
@@ -399,6 +401,14 @@ export default function Relatorios() {
       .filter(s => s.media !== null)
       .sort((a, b) => (b.media ?? 0) - (a.media ?? 0)) // Mais econômico primeiro
   }, [abastecimentos, eficienciaMap, excluidos])
+
+  // Gráfico: Top veículos por gasto (apenas incluídos)
+  const topVeiculos = useMemo(() => {
+    return veiculoStats
+      .filter((v) => v.incluido)
+      .slice(0, 8)
+      .map((v) => ({ nome: v.nome, valor: v.valorTotal }))
+  }, [veiculoStats])
 
   // Gráfico 1: Gasto por Combustível (apenas incluídos)
   const dadosCombustivel = useMemo(() => {
@@ -797,30 +807,37 @@ export default function Relatorios() {
         {/* Distribuição por Combustível */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm flex flex-col min-w-0 overflow-hidden">
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Gastos por Combustível</h3>
-          <div className="w-full h-48 flex items-center justify-center">
+          <div className="relative w-full h-48 flex items-center justify-center">
             {dadosCombustivel.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">Sem dados</div>
             ) : (
-              <ResponsiveContainer width={isPrinting ? 260 : "99%"} height={192}>
-                <PieChart>
-                  <Pie
-                    data={dadosCombustivel}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={3}
-                    dataKey="value"
-                    isAnimationActive={!isPrinting}
-                  >
-                    {dadosCombustivel.map((entry, idx) => (
-                      <Cell key={entry.name} fill={CORES_PIE[idx % CORES_PIE.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v) => fmtBRL(Number(v))} />
-                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width={isPrinting ? 260 : "99%"} height={192}>
+                  <PieChart>
+                    <Pie
+                      data={dadosCombustivel}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={52}
+                      outerRadius={72}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                      isAnimationActive={!isPrinting}
+                    >
+                      {dadosCombustivel.map((entry, idx) => (
+                        <Cell key={entry.name} fill={CORES_PIE[idx % CORES_PIE.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip hideLabel formatter={(v, n) => `${n}: ${fmtBRL(v)}`} />} />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 -mt-6 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total</span>
+                  <span className="text-base font-bold text-slate-800 dark:text-slate-100">{fmtBRL(kpis.totalGasto)}</span>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -836,20 +853,41 @@ export default function Relatorios() {
                 <AreaChart data={dadosEvolucao} margin={{ top: 5, right: 25, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b62f0" stopOpacity={0.2} />
+                      <stop offset="5%" stopColor="#3b62f0" stopOpacity={0.28} />
                       <stop offset="95%" stopColor="#3b62f0" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <Tooltip formatter={(v) => fmtBRL(Number(v))} labelStyle={{ color: '#64748b' }} />
-                  <Area type="monotone" dataKey="valor" stroke="#3b62f0" strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" isAnimationActive={!isPrinting} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+                  <Tooltip content={<ChartTooltip formatter={(v) => fmtBRL(v)} />} />
+                  <Area type="monotone" dataKey="valor" stroke="#3b62f0" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValor)" dot={{ r: 2.5, fill: '#3b62f0' }} activeDot={{ r: 5 }} isAnimationActive={!isPrinting} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Top veículos por gasto */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm print-avoid-break">
+        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Ranking de Gasto por Veículo</h3>
+        {topVeiculos.length === 0 ? (
+          <div className="flex h-32 items-center justify-center text-xs text-slate-400">Sem dados</div>
+        ) : (
+          <ResponsiveContainer width={isPrinting ? 520 : "99%"} height={Math.max(200, topVeiculos.length * 40)}>
+            <BarChart data={topVeiculos} layout="vertical" margin={{ left: 20, right: 64 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+              <YAxis type="category" dataKey="nome" width={90} tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+              <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
+              <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={26} isAnimationActive={!isPrinting}>
+                {topVeiculos.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                <LabelList dataKey="valor" position="right" formatter={(v: any) => fmtBRL(Number(v))} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* SEÇÃO INTERATIVA: OS x DESEMPENHO */}

@@ -1,18 +1,16 @@
 import { useMemo, useState } from 'react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell, LabelList,
 } from 'recharts'
 import { Building2, TrendingUp, TrendingDown, Fuel } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAbastecimentos, type FiltrosAbast } from '../lib/queries'
 import { fmtBRL, fmtNum } from '../lib/format'
 import { Input } from '../components/ui/fields'
+import { useChartTheme, ChartTooltip, CHART_COLORS, tickBRLk } from '../components/ui/charts'
 
 /** Paleta para diferenciar os postos nos gráficos. */
-const CORES = [
-  '#3b62f0', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4',
-  '#ef4444', '#ec4899', '#84cc16', '#6366f1', '#64748b',
-]
+const CORES = CHART_COLORS
 
 const ROTULO_SEM_POSTO = 'Não informado'
 
@@ -28,6 +26,7 @@ interface ResumoPosto {
 export default function AnalisePostos() {
   const [filtros, setFiltros] = useState<FiltrosAbast>({})
   const { data: lista = [], isLoading } = useAbastecimentos(filtros)
+  const ct = useChartTheme()
 
   const { resumo, totalValor } = useMemo(() => {
     const mapa = new Map<string, ResumoPosto>()
@@ -63,6 +62,11 @@ export default function AnalisePostos() {
   const maisUsado = resumo.length
     ? resumo.reduce((a, b) => (b.registros > a.registros ? b : a))
     : null
+
+  // Comparativo de preço médio (R$/L) — só postos reais, do mais barato ao mais caro
+  const precoData = [...comPreco]
+    .map((p) => ({ posto: p.posto, precoMedio: Number(p.precoMedio.toFixed(3)) }))
+    .sort((a, b) => a.precoMedio - b.precoMedio)
 
   return (
     <motion.div
@@ -105,30 +109,55 @@ export default function AnalisePostos() {
         />
       </div>
 
-      {/* Gráfico de gasto por posto */}
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por posto</h2>
-        {resumo.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 dark:text-slate-500">
-            <Fuel className="mx-auto mb-2 h-8 w-8" />
-            {isLoading ? 'Carregando…' : 'Nenhum abastecimento no período.'}
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={Math.max(220, resumo.length * 42)}>
-            <BarChart data={resumo} layout="vertical" margin={{ left: 12, right: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
-              <YAxis type="category" dataKey="posto" width={140} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-              <Tooltip
-                formatter={(v: any) => [fmtBRL(Number(v || 0)), 'Gasto']}
-                contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }}
-              />
-              <Bar dataKey="valor" radius={[0, 4, 4, 0]} name="Gasto">
-                {resumo.map((_, i) => <Cell key={i} fill={CORES[i % CORES.length]} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+      {/* Gráficos */}
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Gasto por posto</h2>
+          {resumo.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500">
+              <Fuel className="mx-auto mb-2 h-8 w-8" />
+              {isLoading ? 'Carregando…' : 'Nenhum abastecimento no período.'}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(220, resumo.length * 46)}>
+              <BarChart data={resumo} layout="vertical" margin={{ left: 12, right: 56 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+                <YAxis type="category" dataKey="posto" width={130} tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
+                <Bar dataKey="valor" radius={[0, 6, 6, 0]} name="Gasto" maxBarSize={28}>
+                  {resumo.map((_, i) => <Cell key={i} fill={CORES[i % CORES.length]} />)}
+                  <LabelList dataKey="valor" position="right" formatter={(v: any) => fmtBRL(Number(v))} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Preço médio (R$/L) por posto</h2>
+          {precoData.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500">
+              <Fuel className="mx-auto mb-2 h-8 w-8" />
+              {isLoading ? 'Carregando…' : 'Sem preço médio para comparar.'}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(220, precoData.length * 46)}>
+              <BarChart data={precoData} layout="vertical" margin={{ left: 12, right: 64 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtBRL(v)} domain={[0, 'auto']} />
+                <YAxis type="category" dataKey="posto" width={130} tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => `${fmtBRL(v)} / L`} />} />
+                <Bar dataKey="precoMedio" radius={[0, 6, 6, 0]} name="R$/L" maxBarSize={28}>
+                  {precoData.map((p, i) => (
+                    <Cell key={i} fill={p.posto === maisBarato?.posto ? '#16a34a' : p.posto === maisCaro?.posto ? '#ef4444' : CORES[i % CORES.length]} />
+                  ))}
+                  <LabelList dataKey="precoMedio" position="right" formatter={(v: any) => fmtBRL(Number(v))} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       {/* Tabela comparativa */}
