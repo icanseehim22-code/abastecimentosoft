@@ -5,8 +5,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar, LabelList
 } from 'recharts'
 import {
-  FileText, Printer, Fuel, DollarSign, TrendingUp, Award,
-  MapPin, Zap, Download, Sparkles, Target, AlertTriangle, Check
+  FileText, Printer, Fuel, DollarSign, TrendingUp, TrendingDown, Award,
+  MapPin, Zap, Download, Target, AlertTriangle, Check, CalendarDays, Sparkles
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import {
@@ -73,6 +73,29 @@ export default function Relatorios() {
     combustivel: filtros.combustivel
   })
   const { data: eficienciaRows = [] } = useEficiencia()
+
+  // Mês anterior para comparativo semanal
+  const { inicioMesAnterior, fimMesAnterior, labelMesAtual, labelMesAnterior } = useMemo(() => {
+    const d = new Date(filtros.inicio)
+    const ano = d.getFullYear()
+    const mes = d.getMonth() // 0-based
+    const mesAnteriorDate = new Date(ano, mes - 1, 1)
+    const ultimoDiaMesAnterior = new Date(ano, mes, 0)
+    const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+    return {
+      inicioMesAnterior: `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2,'0')}-01`,
+      fimMesAnterior: ultimoDiaMesAnterior.toISOString().split('T')[0],
+      labelMesAtual: `${nomesMes[mes]}/${String(ano).slice(2)}`,
+      labelMesAnterior: `${nomesMes[mesAnteriorDate.getMonth()]}/${String(mesAnteriorDate.getFullYear()).slice(2)}`,
+    }
+  }, [filtros.inicio])
+
+  const { data: abastecimentosMesAnterior = [] } = useAbastecimentos({
+    inicio: inicioMesAnterior,
+    fim: fimMesAnterior,
+    veiculoId: filtros.veiculoId,
+    combustivel: filtros.combustivel
+  })
 
   // Carrega as metas do banco com base no mês do filtro inicial
   const parsedPeriod = useMemo(() => {
@@ -437,7 +460,51 @@ export default function Relatorios() {
       })
   }, [abastecimentos, excluidos])
 
+  // Comparativo semanal: mês atual vs mês anterior
+  const comparativoSemanal = useMemo(() => {
+    function semanaDoMes(dataStr: string): number {
+      const d = new Date(dataStr)
+      return Math.min(4, Math.floor((d.getDate() - 1) / 7)) // 0–3 → S1–S4
+    }
 
+    const semanas = [0, 1, 2, 3]
+    const labelSemanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4']
+
+    const atual: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0} }
+    const anterior: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0} }
+
+    for (const r of abastecimentos) {
+      if (excluidos[r.veiculo_id]) continue
+      const s = semanaDoMes(r.data)
+      atual[s].gasto += Number(r.valor)
+      atual[s].litros += Number(r.litros)
+    }
+    for (const r of abastecimentosMesAnterior) {
+      const s = semanaDoMes(r.data)
+      anterior[s].gasto += Number(r.valor)
+      anterior[s].litros += Number(r.litros)
+    }
+
+    return semanas.map((s) => ({
+      semana: labelSemanas[s],
+      [`gasto_${labelMesAtual}`]: atual[s].gasto,
+      [`gasto_${labelMesAnterior}`]: anterior[s].gasto,
+      [`litros_${labelMesAtual}`]: atual[s].litros,
+      [`litros_${labelMesAnterior}`]: anterior[s].litros,
+      deltaGasto: anterior[s].gasto > 0 ? ((atual[s].gasto - anterior[s].gasto) / anterior[s].gasto) * 100 : null,
+    }))
+  }, [abastecimentos, abastecimentosMesAnterior, excluidos, labelMesAtual, labelMesAnterior])
+
+  // Totais para o cabeçalho do comparativo
+  const totaisComparativo = useMemo(() => {
+    const gastoAtual = comparativoSemanal.reduce((s, r) => s + (r[`gasto_${labelMesAtual}`] as number), 0)
+    const gastoAnterior = comparativoSemanal.reduce((s, r) => s + (r[`gasto_${labelMesAnterior}`] as number), 0)
+    const litrosAtual = comparativoSemanal.reduce((s, r) => s + (r[`litros_${labelMesAtual}`] as number), 0)
+    const litrosAnterior = comparativoSemanal.reduce((s, r) => s + (r[`litros_${labelMesAnterior}`] as number), 0)
+    const deltaGasto = gastoAnterior > 0 ? ((gastoAtual - gastoAnterior) / gastoAnterior) * 100 : null
+    const deltaLitros = litrosAnterior > 0 ? ((litrosAtual - litrosAnterior) / litrosAnterior) * 100 : null
+    return { gastoAtual, gastoAnterior, litrosAtual, litrosAnterior, deltaGasto, deltaLitros }
+  }, [comparativoSemanal, labelMesAtual, labelMesAnterior])
 
   // Geração Automática de Insights Executivos (apenas incluídos)
   const insights = useMemo(() => {
@@ -784,6 +851,145 @@ export default function Relatorios() {
               {kpis.custoPorKm ? fmtBRL(kpis.custoPorKm) : '—'}
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* COMPARATIVO SEMANAL: MÊS ATUAL vs MÊS ANTERIOR */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm print-avoid-break">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 mb-5">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-brand-500" /> Comparativo Semanal — {labelMesAtual} vs {labelMesAnterior}
+          </h2>
+          {/* Mini KPIs de delta */}
+          <div className="flex flex-wrap gap-3">
+            {/* Delta Gasto */}
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Gasto total</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{fmtBRL(totaisComparativo.gastoAtual)}</span>
+              {totaisComparativo.deltaGasto !== null && (
+                <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                  totaisComparativo.deltaGasto > 0
+                    ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400'
+                    : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                }`}>
+                  {totaisComparativo.deltaGasto > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {Math.abs(totaisComparativo.deltaGasto).toFixed(1)}%
+                </span>
+              )}
+            </div>
+            {/* Delta Litros */}
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Volume total</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{fmtNum(totaisComparativo.litrosAtual)} L</span>
+              {totaisComparativo.deltaLitros !== null && (
+                <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                  totaisComparativo.deltaLitros > 0
+                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+                    : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                }`}>
+                  {totaisComparativo.deltaLitros > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {Math.abs(totaisComparativo.deltaLitros).toFixed(1)}%
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Gráfico de Gastos por Semana */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Gasto (R$) por semana</p>
+            <ResponsiveContainer width={isPrinting ? 250 : '99%'} height={200}>
+              <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
+                <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
+                <Tooltip content={<ChartTooltip formatter={(v) => fmtBRL(v)} />} />
+                <Bar dataKey={`gasto_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Bar dataKey={`gasto_${labelMesAtual}`} name={labelMesAtual} fill="#3b62f0" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico de Litros por Semana */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Volume (L) por semana</p>
+            <ResponsiveContainer width={isPrinting ? 250 : '99%'} height={200}>
+              <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
+                <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip formatter={(v) => `${fmtNum(v)} L`} />} />
+                <Bar dataKey={`litros_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Bar dataKey={`litros_${labelMesAtual}`} name={labelMesAtual} fill="#10b981" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Tabela de detalhes por semana */}
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <th className="py-2 text-left text-xs font-semibold text-slate-400 uppercase">Semana</th>
+                <th className="py-2 text-right text-xs font-semibold text-slate-400 uppercase">Gasto {labelMesAnterior}</th>
+                <th className="py-2 text-right text-xs font-semibold text-slate-400 uppercase">Gasto {labelMesAtual}</th>
+                <th className="py-2 text-right text-xs font-semibold text-slate-400 uppercase">Variação</th>
+                <th className="py-2 text-right text-xs font-semibold text-slate-400 uppercase">Litros {labelMesAnterior}</th>
+                <th className="py-2 text-right text-xs font-semibold text-slate-400 uppercase">Litros {labelMesAtual}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparativoSemanal.map((row) => {
+                const ga = row[`gasto_${labelMesAnterior}`] as number
+                const gc = row[`gasto_${labelMesAtual}`] as number
+                const la = row[`litros_${labelMesAnterior}`] as number
+                const lc = row[`litros_${labelMesAtual}`] as number
+                const delta = ga > 0 ? ((gc - ga) / ga) * 100 : null
+                const subiu = delta !== null && delta > 0
+                return (
+                  <tr key={row.semana} className="border-b border-slate-50 dark:border-slate-800/40 hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition">
+                    <td className="py-2.5 font-semibold text-slate-700 dark:text-slate-200">{row.semana}</td>
+                    <td className="py-2.5 text-right text-slate-500 dark:text-slate-400">{ga > 0 ? fmtBRL(ga) : '—'}</td>
+                    <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{gc > 0 ? fmtBRL(gc) : '—'}</td>
+                    <td className="py-2.5 text-right">
+                      {delta !== null ? (
+                        <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${
+                          subiu ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
+                        }`}>
+                          {subiu ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                          {subiu ? '+' : ''}{delta.toFixed(1)}%
+                        </span>
+                      ) : <span className="text-slate-300">—</span>}
+                    </td>
+                    <td className="py-2.5 text-right text-slate-500 dark:text-slate-400">{la > 0 ? `${fmtNum(la)} L` : '—'}</td>
+                    <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{lc > 0 ? `${fmtNum(lc)} L` : '—'}</td>
+                  </tr>
+                )
+              })}
+              {/* Linha de totais */}
+              <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/30">
+                <td className="py-2.5 font-bold text-slate-700 dark:text-slate-200">Total</td>
+                <td className="py-2.5 text-right font-bold text-slate-600 dark:text-slate-300">{fmtBRL(totaisComparativo.gastoAnterior)}</td>
+                <td className="py-2.5 text-right font-bold text-slate-800 dark:text-slate-100">{fmtBRL(totaisComparativo.gastoAtual)}</td>
+                <td className="py-2.5 text-right">
+                  {totaisComparativo.deltaGasto !== null && (
+                    <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${
+                      totaisComparativo.deltaGasto > 0 ? 'text-red-500' : 'text-emerald-600'
+                    }`}>
+                      {totaisComparativo.deltaGasto > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                      {totaisComparativo.deltaGasto > 0 ? '+' : ''}{totaisComparativo.deltaGasto.toFixed(1)}%
+                    </span>
+                  )}
+                </td>
+                <td className="py-2.5 text-right font-bold text-slate-600 dark:text-slate-300">{fmtNum(totaisComparativo.litrosAnterior)} L</td>
+                <td className="py-2.5 text-right font-bold text-slate-800 dark:text-slate-100">{fmtNum(totaisComparativo.litrosAtual)} L</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
