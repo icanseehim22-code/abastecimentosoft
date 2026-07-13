@@ -428,6 +428,72 @@ export default function Relatorios() {
       .filter(s => s.media !== null)
       .sort((a, b) => (b.media ?? 0) - (a.media ?? 0)) // Mais econômico primeiro
   }, [abastecimentos, eficienciaMap, excluidos])
+  
+  // Cálculo de Manutenção Preventiva de 10k em 10k
+  const dadosManutencao = useMemo(() => {
+    // 1. Obter o último KM conhecido de cada veículo (a partir do banco global, ordenando os abastecimentos históricos)
+    // Para estimar o consumo diário, pegamos a diferença entre o primeiro e o último abastecimento de cada veículo
+    const kmsPorVeiculo: Record<string, { kms: number[]; datas: string[] }> = {}
+    
+    // Agrupa dados históricos por veículo
+    for (const r of abastecimentosRaw) {
+      if (r.km && r.km > 0) {
+        if (!kmsPorVeiculo[r.veiculo_id]) kmsPorVeiculo[r.veiculo_id] = { kms: [], datas: [] }
+        kmsPorVeiculo[r.veiculo_id].kms.push(r.km)
+        kmsPorVeiculo[r.veiculo_id].datas.push(r.data)
+      }
+    }
+    
+    return veiculos.map((v) => {
+      const vKms = kmsPorVeiculo[v.id]
+      let kmAtual = v.km_inicial ?? 0
+      let kmMaisAntigo = v.km_inicial ?? 0
+      let dataMaisAntiga = v.created_at ? v.created_at.split('T')[0] : ''
+      let dataAtual = new Date().toISOString().split('T')[0]
+      
+      if (vKms && vKms.kms.length > 0) {
+        // Encontra o maior km (atual) e o menor km
+        const sortedIndices = vKms.kms.map((_, i) => i).sort((a, b) => new Date(vKms.datas[a]).getTime() - new Date(vKms.datas[b]).getTime())
+        const indexPrimeiro = sortedIndices[0]
+        const indexUltimo = sortedIndices[sortedIndices.length - 1]
+        
+        kmAtual = vKms.kms[indexUltimo]
+        dataAtual = vKms.datas[indexUltimo]
+        
+        kmMaisAntigo = vKms.kms[indexPrimeiro]
+        dataMaisAntiga = vKms.datas[indexPrimeiro]
+      }
+      
+      // Proxima revisão (multiplo de 10.000)
+      const proximaRevisao = Math.ceil((kmAtual + 1) / 10000) * 10000
+      const kmRestante = Math.max(0, proximaRevisao - kmAtual)
+      
+      // Estimar rodagem diária média
+      let kmDiarioMedio = 30 // Fallback padrão de 30km/dia
+      if (kmAtual > kmMaisAntigo && dataMaisAntiga && dataAtual !== dataMaisAntiga) {
+        const diffTime = Math.abs(new Date(dataAtual).getTime() - new Date(dataMaisAntiga).getTime())
+        const dias = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+        kmDiarioMedio = Math.max(5, (kmAtual - kmMaisAntigo) / dias)
+      }
+      
+      // Estimar data da próxima revisão
+      const diasAteRevisao = kmDiarioMedio > 0 ? kmRestante / kmDiarioMedio : 365
+      const dataRevisaoPrevista = new Date()
+      dataRevisaoPrevista.setDate(dataRevisaoPrevista.getDate() + diasAteRevisao)
+      
+      return {
+        id: v.id,
+        nome: v.nome,
+        placa: v.placa,
+        kmAtual,
+        proximaRevisao,
+        kmRestante,
+        previsaoData: kmRestante === 0 ? 'Excedida!' : dataRevisaoPrevista.toLocaleDateString('pt-BR'),
+        status: kmRestante <= 1000 ? 'urgente' : kmRestante <= 2500 ? 'alerta' : 'ok',
+        incluido: !excluidos[v.id]
+      }
+    }).filter(item => item.incluido && item.kmAtual > 0).sort((a, b) => a.kmRestante - b.kmRestante)
+  }, [veiculos, abastecimentosRaw, excluidos])
 
   // Gráfico: Top veículos por gasto (apenas incluídos)
   const topVeiculos = useMemo(() => {
@@ -1270,6 +1336,66 @@ export default function Relatorios() {
                     </tr>
                   )
                 })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SEÇÃO MANUTENÇÃO PREVENTIVA */}
+      <div className="print-page-break rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 dark:backdrop-blur-md shadow-sm print:border-none print:shadow-none">
+        <div className="border-b border-slate-100 dark:border-slate-800 p-5">
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" /> Controle de Manutenção Preventiva (Revisão 10.000 km)
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">Acompanhamento automático das próximas revisões com previsão baseada no uso diário histórico da frota.</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 dark:bg-slate-900/50 text-left text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <th className="px-4 py-3">Veículo</th>
+                <th className="px-4 py-3 text-right">KM Atual</th>
+                <th className="px-4 py-3 text-right">Próxima Revisão</th>
+                <th className="px-4 py-3 text-right">Faltam (km)</th>
+                <th className="px-4 py-3 text-center">Previsão Realização</th>
+                <th className="px-4 py-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {dadosManutencao.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Sem dados de hodômetro válidos no período.</td></tr>
+              ) : (
+                dadosManutencao.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-slate-800 dark:text-slate-200">{item.nome}</div>
+                      <div className="text-xxs text-slate-400 dark:text-slate-500">{item.placa}</div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-slate-300">{fmtNum(item.kmAtual, 0)} km</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-850 dark:text-slate-100">{fmtNum(item.proximaRevisao, 0)} km</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={item.status === 'urgente' ? 'text-rose-600 font-bold' : item.status === 'alerta' ? 'text-amber-600 font-semibold' : 'text-slate-500'}>
+                        {fmtNum(item.kmRestante, 0)} km
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-350 font-medium">
+                      {item.previsaoData}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xxs font-bold uppercase ${
+                        item.status === 'urgente'
+                          ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse'
+                          : item.status === 'alerta'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                      }`}>
+                        {item.status === 'urgente' ? 'Urgente' : item.status === 'alerta' ? 'Próximo' : 'Em Dia'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
