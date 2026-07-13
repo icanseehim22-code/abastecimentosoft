@@ -591,6 +591,49 @@ export default function Relatorios() {
     return { gastoAtual, gastoAnterior, litrosAtual, litrosAnterior, deltaGasto, deltaLitros }
   }, [comparativoSemanal, labelMesAtual, labelMesAnterior])
 
+  // Comparativo de preço médio de combustível (todos postos juntos) por tipo
+  const comparativoPrecosCombustivel = useMemo(() => {
+    const combustiveis = ['Etanol', 'Gasolina', 'Diesel', 'GNV']
+    
+    const atualAcum: Record<string, { valor: number; litros: number }> = {}
+    const anteriorAcum: Record<string, { valor: number; litros: number }> = {}
+    
+    combustiveis.forEach(c => {
+      atualAcum[c] = { valor: 0, litros: 0 }
+      anteriorAcum[c] = { valor: 0, litros: 0 }
+    })
+    
+    for (const r of abastecimentos) {
+      if (excluidos[r.veiculo_id]) continue
+      const c = r.combustivel
+      if (atualAcum[c]) {
+        atualAcum[c].valor += Number(r.valor)
+        atualAcum[c].litros += Number(r.litros)
+      }
+    }
+    
+    for (const r of abastecimentosMesAnterior) {
+      const c = r.combustivel
+      if (anteriorAcum[c]) {
+        anteriorAcum[c].valor += Number(r.valor)
+        anteriorAcum[c].litros += Number(r.litros)
+      }
+    }
+    
+    return combustiveis.map(c => {
+      const pAtual = atualAcum[c].litros > 0 ? atualAcum[c].valor / atualAcum[c].litros : null
+      const pAnterior = anteriorAcum[c].litros > 0 ? anteriorAcum[c].valor / anteriorAcum[c].litros : null
+      const delta = pAnterior && pAtual ? ((pAtual - pAnterior) / pAnterior) * 100 : null
+      
+      return {
+        combustivel: c,
+        precoAtual: pAtual,
+        precoAnterior: pAnterior,
+        delta
+      }
+    }).filter(item => item.precoAtual !== null || item.precoAnterior !== null)
+  }, [abastecimentos, abastecimentosMesAnterior, excluidos])
+
   // Geração Automática de Insights Executivos (apenas incluídos)
   const insights = useMemo(() => {
     const list: string[] = []
@@ -1076,6 +1119,39 @@ export default function Relatorios() {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* COMPARATIVO DE PREÇO MÉDIO POR COMBUSTÍVEL */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm print-avoid-break">
+        <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+          <Fuel className="h-4 w-4 text-emerald-500" /> Comparativo de Preço Médio (R$/L) — {labelMesAtual} vs {labelMesAnterior}
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {comparativoPrecosCombustivel.map((item) => {
+            const subiu = item.delta !== null && item.delta > 0
+            return (
+              <div key={item.combustivel} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-4">
+                <div className="text-xs font-semibold text-slate-400 uppercase mb-1">{item.combustivel}</div>
+                <div className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                  {item.precoAtual ? `${fmtBRL(item.precoAtual)}/L` : '—'}
+                </div>
+                <div className="mt-1 flex items-center gap-1.5 text-xxs font-semibold">
+                  <span className="text-slate-450 dark:text-slate-500">Ant: {item.precoAnterior ? fmtBRL(item.precoAnterior) : '—'}</span>
+                  {item.delta !== null && (
+                    <span className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-bold ${
+                      subiu ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-450' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-450'
+                    }`}>
+                      {subiu ? '▲' : '▼'} {Math.abs(item.delta).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          {comparativoPrecosCombustivel.length === 0 && (
+            <div className="col-span-4 text-center text-xs text-slate-400 py-4">Sem dados de combustível para comparar no período.</div>
+          )}
         </div>
       </div>
 
