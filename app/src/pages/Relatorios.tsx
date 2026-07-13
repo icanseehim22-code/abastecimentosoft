@@ -623,16 +623,17 @@ export default function Relatorios() {
             margin-top: 0 !important;
             padding-top: 2rem !important;
           }
-          .print-avoid-break {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
           table {
             width: 100% !important;
             font-size: 10px !important;
           }
           th, td {
             padding: 4px 6px !important;
+          }
+          .print-grid-2 {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 1.5rem !important;
           }
         }
       `}} />
@@ -899,11 +900,11 @@ export default function Relatorios() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 print-grid-2">
           {/* Gráfico de Gastos por Semana */}
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Gasto (R$) por semana</p>
-            <ResponsiveContainer width={isPrinting ? 250 : '99%'} height={200}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
                 <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
@@ -919,7 +920,7 @@ export default function Relatorios() {
           {/* Gráfico de Litros por Semana */}
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Volume (L) por semana</p>
-            <ResponsiveContainer width={isPrinting ? 250 : '99%'} height={200}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
                 <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
