@@ -467,8 +467,9 @@ export default function Relatorios() {
   // Comparativo semanal: mês atual vs mês anterior
   const comparativoSemanal = useMemo(() => {
     function semanaDoMes(dataStr: string): number {
-      const d = new Date(dataStr)
-      return Math.min(4, Math.floor((d.getDate() - 1) / 7)) // 0–3 → S1–S4
+      // dataStr está no formato 'YYYY-MM-DD'
+      const dia = Number(dataStr.split('-')[2])
+      return Math.min(3, Math.floor((dia - 1) / 7)) // 0–3 → Sem 1–Sem 4
     }
 
     const semanas = [0, 1, 2, 3]
