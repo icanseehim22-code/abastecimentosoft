@@ -1252,7 +1252,7 @@ export default function Relatorios() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-slate-800 dark:text-slate-200">{s.nome}</div>
-                        <div className="text-xs text-slate-400 dark:text-slate-500">{s.placa} • {s.count} abastecimentos</div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500">{s.placa} • Principal: {s.motoristaPrincipal}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className="hidden print:inline font-bold text-slate-800">{s.os || '0'}</span>
