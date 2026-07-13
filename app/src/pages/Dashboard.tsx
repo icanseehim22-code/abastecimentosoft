@@ -49,9 +49,25 @@ export default function Dashboard() {
 
   const porVeiculo = useMemo(() => {
     const mes = abast.filter((a) => ymKey(a.data) === ym)
-    const map = new Map<string, number>()
-    for (const a of mes) map.set(a.veiculo_nome, (map.get(a.veiculo_nome) || 0) + Number(a.valor || 0))
-    return [...map.entries()].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor)
+    const map = new Map<string, { valor: number; motoristas: Map<string, number> }>()
+    for (const a of mes) {
+      if (!map.has(a.veiculo_nome)) map.set(a.veiculo_nome, { valor: 0, motoristas: new Map() })
+      const entry = map.get(a.veiculo_nome)!
+      entry.valor += Number(a.valor || 0)
+      const mot = a.motorista?.trim() || ''
+      if (mot) entry.motoristas.set(mot, (entry.motoristas.get(mot) || 0) + 1)
+    }
+    return [...map.entries()]
+      .map(([nome, { valor, motoristas }]) => {
+        let motoristaPrincipal = '—'
+        let maxC = 0
+        for (const [m, c] of motoristas.entries()) { if (c > maxC) { maxC = c; motoristaPrincipal = m } }
+        // Abreviar nome longo: pegar primeiro e último nome
+        const partes = motoristaPrincipal.split(' ')
+        const nomeAbrev = partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : motoristaPrincipal
+        return { nome, valor, motoristaPrincipal: nomeAbrev }
+      })
+      .sort((a, b) => b.valor - a.valor)
   }, [abast, ym])
 
   const porCombustivel = useMemo(() => {
@@ -118,17 +134,36 @@ export default function Dashboard() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
-              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Gasto por veículo — {ymLabel(ym)}</h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Ranking de Gasto por Veículo — {ymLabel(ym)}</h2>
               {porVeiculo.length === 0 ? (
                 <div className="py-20 text-center text-sm text-slate-400 dark:text-slate-500">Sem dados no mês.</div>
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={porVeiculo} layout="vertical" margin={{ left: 20, right: 48 }}>
+                <ResponsiveContainer width="100%" height={Math.max(280, porVeiculo.length * 46)}>
+                  <BarChart data={porVeiculo} layout="vertical" margin={{ left: 16, right: 56 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
-                    <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: ct.axis }} width={90} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
-                    <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={26}>
+                    <YAxis
+                      type="category"
+                      dataKey="nome"
+                      width={110}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={(props: any) => {
+                        const { x, y, payload } = props
+                        const item = porVeiculo.find(v => v.nome === payload.value)
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text x={-4} y={-5} textAnchor="end" fill={ct.axis} fontSize={11} fontWeight={600}>{payload.value}</text>
+                            <text x={-4} y={9} textAnchor="end" fill={ct.axis} fontSize={10} opacity={0.6}>{item?.motoristaPrincipal ?? '—'}</text>
+                          </g>
+                        )
+                      }}
+                    />
+                    <Tooltip
+                      cursor={ct.cursor}
+                      content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />}
+                    />
+                    <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={22}>
                       {porVeiculo.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
                       <LabelList dataKey="valor" position="right" formatter={(v: any) => fmtBRL(Number(v))} style={{ fontSize: 11, fill: ct.axis, fontWeight: 600 }} />
                     </Bar>
