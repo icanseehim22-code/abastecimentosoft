@@ -303,6 +303,7 @@ export default function Relatorios() {
       kmParaMedia: number
       count: number
       incluido: boolean
+      motoristas: Map<string, number>
     }> = {}
 
     for (const r of abastecimentos) {
@@ -321,7 +322,8 @@ export default function Relatorios() {
           litrosParaMedia: 0,
           kmParaMedia: 0,
           count: 0,
-          incluido
+          incluido,
+          motoristas: new Map()
         }
       }
 
@@ -329,6 +331,9 @@ export default function Relatorios() {
       s.valorTotal += Number(r.valor)
       s.litrosTotal += Number(r.litros)
       s.count += 1
+
+      const mot = r.motorista?.trim() || ''
+      if (mot) s.motoristas.set(mot, (s.motoristas.get(mot) || 0) + 1)
 
       if (ef && ef.km_rodado && ef.km_rodado > 0) {
         s.kmRodadoTotal += ef.km_rodado
@@ -371,13 +376,22 @@ export default function Relatorios() {
         else nota = 'C (Atenção)'
       }
 
+      let motoristaPrincipal = '—'
+      let maxC = 0
+      for (const [m, c] of item.motoristas.entries()) {
+        if (c > maxC) { maxC = c; motoristaPrincipal = m }
+      }
+      const partes = motoristaPrincipal.split(' ')
+      const nomeAbrev = partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : motoristaPrincipal
+
       return {
         ...item,
         os,
         custoPorOS,
         kmPorOS,
         osPorLitro,
-        nota
+        nota,
+        motoristaPrincipal: nomeAbrev
       }
     }).sort((a, b) => b.valorTotal - a.valorTotal)
   }, [abastecimentos, eficienciaMap, osMap, excluidos])
@@ -500,7 +514,7 @@ export default function Relatorios() {
     return veiculoStats
       .filter((v) => v.incluido)
       .slice(0, 8)
-      .map((v) => ({ nome: v.nome, valor: v.valorTotal }))
+      .map((v) => ({ nome: v.nome, valor: v.valorTotal, motoristaPrincipal: v.motoristaPrincipal }))
   }, [veiculoStats])
 
   // Gráfico 1: Gasto por Combustível (apenas incluídos)
@@ -1153,11 +1167,27 @@ export default function Relatorios() {
         {topVeiculos.length === 0 ? (
           <div className="flex h-32 items-center justify-center text-xs text-slate-400">Sem dados</div>
         ) : (
-          <ResponsiveContainer width={isPrinting ? 520 : "99%"} height={Math.max(200, topVeiculos.length * 40)}>
-            <BarChart data={topVeiculos} layout="vertical" margin={{ left: 20, right: 64 }}>
+          <ResponsiveContainer width={isPrinting ? 520 : "99%"} height={Math.max(260, topVeiculos.length * 46)}>
+            <BarChart data={topVeiculos} layout="vertical" margin={{ left: 16, right: 64 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
-              <YAxis type="category" dataKey="nome" width={90} tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+              <YAxis
+                type="category"
+                dataKey="nome"
+                width={110}
+                axisLine={false}
+                tickLine={false}
+                tick={(props: any) => {
+                  const { x, y, payload } = props
+                  const item = topVeiculos.find(v => v.nome === payload.value)
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text x={-4} y={-5} textAnchor="end" fill={ct.axis} fontSize={11} fontWeight={600}>{payload.value}</text>
+                      <text x={-4} y={9} textAnchor="end" fill={ct.axis} fontSize={10} opacity={0.6}>{item?.motoristaPrincipal ?? '—'}</text>
+                    </g>
+                  )
+                }}
+              />
               <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
               <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={26} isAnimationActive={!isPrinting}>
                 {topVeiculos.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
