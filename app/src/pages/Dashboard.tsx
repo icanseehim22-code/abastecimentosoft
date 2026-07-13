@@ -126,7 +126,7 @@ export default function Dashboard() {
                   <BarChart data={porVeiculo} layout="vertical" margin={{ left: 20, right: 48 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
-                    <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: ct.axis }} width={70} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: ct.axis }} width={90} axisLine={false} tickLine={false} />
                     <Tooltip cursor={ct.cursor} content={<ChartTooltip hideLabel formatter={(v) => fmtBRL(v)} />} />
                     <Bar dataKey="valor" radius={[0, 6, 6, 0]} maxBarSize={26}>
                       {porVeiculo.map((_, i) => <Cell key={i} fill={PALETA[i % PALETA.length]} />)}
