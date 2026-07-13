@@ -24,7 +24,7 @@ interface ResumoPosto {
 }
 
 export default function AnalisePostos() {
-  const [filtros, setFiltros] = useState<FiltrosAbast>({})
+  const [filtros, setFiltros] = useState<FiltrosAbast>({ combustivel: 'Etanol' })
   const { data: lista = [], isLoading } = useAbastecimentos(filtros)
   const ct = useChartTheme()
 
@@ -76,7 +76,21 @@ export default function AnalisePostos() {
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Análise de Posto</h1>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold">Combustível:</span>
+            <select
+              value={filtros.combustivel ?? ''}
+              onChange={(e) => setFiltros({ ...filtros, combustivel: e.target.value || undefined })}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 focus:outline-none"
+            >
+              <option value="">Todos</option>
+              <option value="Etanol">Etanol</option>
+              <option value="Gasolina">Gasolina</option>
+              <option value="Diesel">Diesel</option>
+              <option value="GNV">GNV</option>
+            </select>
+          </div>
           <span className="text-slate-500 dark:text-slate-400">Período:</span>
           <Input type="date" value={filtros.inicio ?? ''} onChange={(e) => setFiltros({ ...filtros, inicio: e.target.value || undefined })} />
           <span className="text-slate-400">→</span>
