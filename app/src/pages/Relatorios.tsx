@@ -76,17 +76,21 @@ export default function Relatorios() {
 
   // Mês anterior para comparativo semanal
   const { inicioMesAnterior, fimMesAnterior, labelMesAtual, labelMesAnterior } = useMemo(() => {
-    const d = new Date(filtros.inicio)
-    const ano = d.getFullYear()
-    const mes = d.getMonth() // 0-based
-    const mesAnteriorDate = new Date(ano, mes - 1, 1)
-    const ultimoDiaMesAnterior = new Date(ano, mes, 0)
+    // filtros.inicio está no formato 'YYYY-MM-DD'
+    const partes = filtros.inicio.split('-').map(Number)
+    const ano = partes[0]
+    const mes = partes[1] - 1 // Converter para 0-based index para bater com nomesMes
+    
+    // Mes anterior
+    const dataAnterior = new Date(ano, mes - 1, 1)
+    const ultimoDiaAnterior = new Date(ano, mes, 0)
+    
     const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
     return {
-      inicioMesAnterior: `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2,'0')}-01`,
-      fimMesAnterior: ultimoDiaMesAnterior.toISOString().split('T')[0],
+      inicioMesAnterior: `${dataAnterior.getFullYear()}-${String(dataAnterior.getMonth() + 1).padStart(2,'0')}-01`,
+      fimMesAnterior: `${ultimoDiaAnterior.getFullYear()}-${String(ultimoDiaAnterior.getMonth() + 1).padStart(2,'0')}-${String(ultimoDiaAnterior.getDate()).padStart(2,'0')}`,
       labelMesAtual: `${nomesMes[mes]}/${String(ano).slice(2)}`,
-      labelMesAnterior: `${nomesMes[mesAnteriorDate.getMonth()]}/${String(mesAnteriorDate.getFullYear()).slice(2)}`,
+      labelMesAnterior: `${nomesMes[dataAnterior.getMonth()]}/${String(dataAnterior.getFullYear()).slice(2)}`,
     }
   }, [filtros.inicio])
 
