@@ -470,17 +470,17 @@ export default function Relatorios() {
     const semanas = [0, 1, 2, 3]
     const labelSemanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4']
 
-    const atual: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0} }
-    const anterior: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0} }
+    const atual: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0}, 4: {gasto:0,litros:0} }
+    const anterior: Record<number, { gasto: number; litros: number }> = { 0: {gasto:0,litros:0}, 1: {gasto:0,litros:0}, 2: {gasto:0,litros:0}, 3: {gasto:0,litros:0}, 4: {gasto:0,litros:0} }
 
     for (const r of abastecimentos) {
       if (excluidos[r.veiculo_id]) continue
-      const s = semanaDoMes(r.data)
+      const s = Math.min(3, semanaDoMes(r.data))
       atual[s].gasto += Number(r.valor)
       atual[s].litros += Number(r.litros)
     }
     for (const r of abastecimentosMesAnterior) {
-      const s = semanaDoMes(r.data)
+      const s = Math.min(3, semanaDoMes(r.data))
       anterior[s].gasto += Number(r.valor)
       anterior[s].litros += Number(r.litros)
     }
