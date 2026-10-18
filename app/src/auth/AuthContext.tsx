@@ -19,8 +19,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    supabase.auth.getSession().then(async ({ data }) => {
+      let sess = data.session
+      // sem sessão: o painel pode entrar sem senha (quem passou pelo login da Cloudflare e está na lista do .env)
+      if (!sess) {
+        try {
+          const r = await fetch('/api/mapa/abast/sso', { credentials: 'same-origin' })
+          const j = r.ok ? await r.json() : null
+          if (j?.ok) {
+            const { data: d2 } = await supabase.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token })
+            sess = d2.session
+          }
+        } catch { /* fora do painel: login normal */ }
+      }
+      setSession(sess)
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
