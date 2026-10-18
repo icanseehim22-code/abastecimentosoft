@@ -15,6 +15,15 @@ body {
   margin: 0;
 }
 
+/* modo escuro com o mesmo fundo do painel SoftSystem */
+html.dark body {
+  color: #eef3ff;
+  background: radial-gradient(1100px 600px at 85% -10%, rgba(47,123,255,.22), transparent 60%),
+              radial-gradient(900px 500px at -10% 110%, rgba(242,107,33,.10), transparent 60%),
+              linear-gradient(180deg, #071a45 0%, #06143a 100%) fixed;
+}
+html.dark ::-webkit-scrollbar-thumb { background: rgba(143,164,214,.35); }
+
 /* Scrollbar discreta */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }

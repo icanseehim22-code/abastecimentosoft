@@ -35,7 +35,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex h-full bg-slate-50 text-slate-800 dark:bg-[#070b13] dark:text-slate-200 transition-colors duration-200">
+    <div className="flex h-full bg-slate-50 text-slate-800 dark:bg-transparent dark:text-slate-200 transition-colors duration-200">
       <aside className="print:hidden flex w-60 flex-col border-r border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:backdrop-blur-md">
         <div className="flex items-center gap-2 px-5 py-4 text-brand-700 dark:text-brand-400">
           <Fuel className="h-6 w-6 animate-pulse" />

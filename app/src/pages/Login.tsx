@@ -48,7 +48,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#070b13] p-4 transition-colors">
+    <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-transparent p-4 transition-colors">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}

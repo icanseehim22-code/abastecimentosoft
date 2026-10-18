@@ -36,7 +36,7 @@ export default function DefinirSenha() {
     'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-brand-950/40'
 
   return (
-    <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#070b13] p-4 transition-colors">
+    <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-transparent p-4 transition-colors">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-md dark:border-slate-800/80 dark:bg-slate-900/60">
         <div className="mb-6 flex flex-col items-center gap-2 text-brand-700 dark:text-brand-400">
           <KeyRound className="h-10 w-10" />
