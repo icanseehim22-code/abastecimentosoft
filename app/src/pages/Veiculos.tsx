@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Pencil, Car, Wrench, Check, Trash2 } from 'lucide-react'
 import {
   useVeiculos, useUpsertVeiculo, useRegrasManutencao,
@@ -42,6 +43,21 @@ export default function Veiculos() {
   const upsertRegra = useUpsertRegraManutencao()
   const deleteRegra = useDeleteRegraManutencao()
 
+  // km de hoje pelo GPS (painel SoftSystem: último km lançado + km rodado no rastreador desde então)
+  const { data: kmGps = {} } = useQuery({
+    queryKey: ['km_atual_gps'],
+    queryFn: async () => {
+      try {
+        const r = await fetch('/api/mapa/abast/km_atual')
+        const j = await r.json()
+        return (j.veiculos || {}) as Record<string, { km: number | null; como: string; km_dia: number | null; gps: boolean }>
+      } catch {
+        return {}
+      }
+    },
+    staleTime: 10 * 60_000,
+  })
+
   // Mapeia o KM atual de cada veículo
   const latestKmMap = useMemo(() => {
     const map: Record<string, number> = {}
@@ -51,8 +67,11 @@ export default function Veiculos() {
         map[vId] = r.km
       }
     }
+    for (const [vId, g] of Object.entries(kmGps)) {
+      if (g.gps && g.km && (!map[vId] || g.km > map[vId])) map[vId] = g.km
+    }
     return map
-  }, [abastecimentos])
+  }, [abastecimentos, kmGps])
 
   // Identifica o status de manutenção (se há itens vencidos ou próximos)
   const statusManutencaoMap = useMemo(() => {
@@ -246,7 +265,8 @@ export default function Veiculos() {
                 <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{fmtNum(currentKm, 0)} km</div>
               </div>
               <div className="text-xs text-slate-400 text-right">
-                Baseado nos abastecimentos.<br/>
+                {kmGps[manutencaoVeiculo.id]?.gps ? <>Abastecimentos + GPS: {kmGps[manutencaoVeiculo.id].como}<br/>
+                  {kmGps[manutencaoVeiculo.id].km_dia ? <>Ritmo: {fmtNum(kmGps[manutencaoVeiculo.id].km_dia, 0)} km/dia<br/></> : null}</> : <>Baseado nos abastecimentos.<br/></>}
                 KM Inicial: {fmtNum(manutencaoVeiculo.km_inicial ?? 0, 0)} km
               </div>
             </div>
@@ -284,6 +304,9 @@ export default function Veiculos() {
                           </div>
                           <div className={`text-xs font-bold ${isVencido ? 'text-rose-600' : isProximo ? 'text-amber-600' : 'text-slate-400'}`}>
                             {isVencido ? `Atrasado em ${fmtNum(Math.abs(restante), 0)} km` : `Restam ${fmtNum(restante, 0)} km`}
+                            {!isVencido && kmGps[manutencaoVeiculo.id]?.km_dia
+                              ? ` • ≈ ${new Date(Date.now() + (restante / kmGps[manutencaoVeiculo.id].km_dia!) * 864e5).toLocaleDateString('pt-BR')}`
+                              : ''}
                           </div>
                         </div>
 
