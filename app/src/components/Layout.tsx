@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Fuel, Car, Users, Gauge, Target,
   AlertTriangle, FileText, Settings, LogOut, Sun, Moon, Boxes, Building2,
-  BarChart3
+  BarChart3, FileUp
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useAlertas } from '../lib/queries'
@@ -11,6 +11,7 @@ import { useTheme } from '../context/ThemeContext'
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/abastecimentos', label: 'Abastecimentos', icon: Fuel },
+  { to: '/importar', label: 'Importar notas', icon: FileUp },
   { to: '/veiculos', label: 'Veículos', icon: Car },
   { to: '/motoristas', label: 'Motoristas', icon: Users },
   { to: '/postos', label: 'Postos', icon: Building2 },

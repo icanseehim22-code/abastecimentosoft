@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import DefinirSenha from './pages/DefinirSenha'
+import ImportarNotas from './pages/ImportarNotas'
 import Dashboard from './pages/Dashboard'
 import Abastecimentos from './pages/Abastecimentos'
 import Veiculos from './pages/Veiculos'
@@ -29,6 +30,7 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="abastecimentos" element={<Abastecimentos />} />
+        <Route path="importar" element={<ImportarNotas />} />
         <Route path="veiculos" element={<Veiculos />} />
         <Route path="motoristas" element={<Motoristas />} />
         <Route path="postos" element={<Postos />} />
