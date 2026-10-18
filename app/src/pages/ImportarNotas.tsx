@@ -98,7 +98,9 @@ export default function ImportarNotas() {
     setLancando(true); setMsg(null)
     const rows = prontas.map((l) => {
       const mot = motoristas.find((m) => m.id === l.motorista_id)
-      const obs = [l.lida?.chave ? `NFC-e ${l.lida.chave}` : 'Importado de foto', l.lida?.fonte === 'ocr' ? '(OCR)' : ''].join(' ').trim()
+      // "hora HH:MM" é lida pelo painel para conferir pelo GPS se o carro estava no posto na hora da nota
+      const obs = [l.lida?.chave ? `NFC-e ${l.lida.chave}` : 'Importado de foto', l.lida?.hora ? `hora ${l.lida.hora}` : '',
+        l.lida?.fonte === 'ocr' ? '(OCR)' : ''].filter(Boolean).join(' ')
       return {
         data: l.data, veiculo_id: l.veiculo_id, motorista_id: l.motorista_id || null, motorista_nome: mot?.nome ?? null,
         combustivel: l.combustivel, km: l.km ? Math.round(num(l.km)!) : null, litros: num(l.litros)!, valor: num(l.valor)!,

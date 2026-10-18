@@ -26,6 +26,17 @@ export default function Login() {
     else setAviso('Enviamos um link para o seu e-mail. Abra e crie sua senha.')
   }
 
+  // entrar sem senha: link de entrada no e-mail (para quem esquece a senha)
+  async function linkEntrar() {
+    setErro(null)
+    setAviso(null)
+    if (!email) return setErro('Digite seu e-mail primeiro.')
+    const emailRedirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo } })
+    if (error) setErro(error.message)
+    else setAviso('Enviamos um link de entrada para o seu e-mail. Abra o e-mail neste aparelho e clique no link.')
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setErro(null)
@@ -61,6 +72,8 @@ export default function Login() {
             <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-400">E-mail</label>
             <input
               type="email"
+              name="email"
+              autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,6 +84,8 @@ export default function Login() {
             <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-400">Senha</label>
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
               required
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
@@ -86,6 +101,9 @@ export default function Login() {
             {loading ? 'Entrando…' : 'Entrar'}
           </button>
           {aviso && <p className="text-sm text-emerald-600 dark:text-emerald-400">{aviso}</p>}
+          <button type="button" onClick={linkEntrar} className="w-full rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+            Entrar sem senha (link no e-mail)
+          </button>
           <button type="button" onClick={enviarLink} className="w-full text-center text-xs text-slate-500 underline hover:text-brand-600 dark:text-slate-400">
             Primeiro acesso ou esqueci a senha
           </button>
