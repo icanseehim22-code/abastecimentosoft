@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Fuel } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-import { supabaseConfigured } from '../lib/supabase'
+import { supabase, supabaseConfigured } from '../lib/supabase'
 import { motion } from 'framer-motion'
 
 export default function Login() {
@@ -12,6 +12,19 @@ export default function Login() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const [aviso, setAviso] = useState<string | null>(null)
+
+  // primeiro acesso ou senha esquecida: manda um link que abre a tela "Criar sua senha"
+  async function enviarLink() {
+    setErro(null)
+    setAviso(null)
+    if (!email) return setErro('Digite seu e-mail primeiro.')
+    const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/definir-senha`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    if (error) setErro(error.message)
+    else setAviso('Enviamos um link para o seu e-mail. Abra e crie sua senha.')
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -71,6 +84,10 @@ export default function Login() {
             className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60 dark:bg-brand-600 dark:hover:bg-brand-500"
           >
             {loading ? 'Entrando…' : 'Entrar'}
+          </button>
+          {aviso && <p className="text-sm text-emerald-600 dark:text-emerald-400">{aviso}</p>}
+          <button type="button" onClick={enviarLink} className="w-full text-center text-xs text-slate-500 underline hover:text-brand-600 dark:text-slate-400">
+            Primeiro acesso ou esqueci a senha
           </button>
         </form>
       </motion.div>

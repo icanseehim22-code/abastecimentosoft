@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import DefinirSenha from './pages/DefinirSenha'
 import Dashboard from './pages/Dashboard'
 import Abastecimentos from './pages/Abastecimentos'
 import Veiculos from './pages/Veiculos'
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/definir-senha" element={<DefinirSenha />} />
       <Route
         element={
           <ProtectedRoute>
