@@ -209,6 +209,20 @@ export default function Relatorios() {
     }
   }
 
+  // 19/10/2026: OS de cada carro vem sozinha do painel SoftSystem (GPS do carro + OS fechadas no IXC).
+  // Sem o painel (app fora dele), volta a valer o número digitado.
+  const [autoOS, setAutoOS] = useState<Record<string, { os: number; fonte: string; km_gps: number | null; detalhe: string }>>({})
+  useEffect(() => {
+    let active = true
+    setAutoOS({})
+    fetch(`/api/mapa/abast/periodo?inicio=${filtros.inicio}&fim=${filtros.fim}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (active && j?.ok) setAutoOS(j.veiculos || {}) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [filtros.inicio, filtros.fim])
+  const osDe = (vId: string) => autoOS[vId]?.os ?? osMap[vId] ?? 0
+
   // Veículos desconsiderados temporariamente no relatório
   const [excluidos, setExcluidos] = useState<Record<string, boolean>>({})
 
@@ -351,7 +365,7 @@ export default function Relatorios() {
 
     items.forEach((item) => {
       if (!item.incluido) return
-      const os = osMap[item.veiculoId] || 0
+      const os = osDe(item.veiculoId)
       if (os > 0) {
         totalOS += os
         totalLitrosComOS += item.litrosTotal
@@ -361,9 +375,10 @@ export default function Relatorios() {
     const avgOSPorLitro = totalLitrosComOS > 0 ? totalOS / totalLitrosComOS : 0
 
     return items.map((item) => {
-      const os = osMap[item.veiculoId] || 0
+      const os = osDe(item.veiculoId)
+      const kmBase = autoOS[item.veiculoId]?.km_gps ?? item.kmRodadoTotal   // km do GPS quando o carro tem rastreador
       const custoPorOS = os > 0 ? item.valorTotal / os : null
-      const kmPorOS = os > 0 ? item.kmRodadoTotal / os : null
+      const kmPorOS = os > 0 ? kmBase / os : null
       const osPorLitro = os > 0 ? os / item.litrosTotal : 0
 
       // Cálculo da Nota Relativa
@@ -394,7 +409,7 @@ export default function Relatorios() {
         motoristaPrincipal: nomeAbrev
       }
     }).sort((a, b) => b.valorTotal - a.valorTotal)
-  }, [abastecimentos, eficienciaMap, osMap, excluidos])
+  }, [abastecimentos, eficienciaMap, osMap, excluidos, autoOS])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Leaderboard / Ranking de Condução Econômica dos Motoristas
   const motoristaRanking = useMemo(() => {
@@ -1281,7 +1296,7 @@ export default function Relatorios() {
             <FileText className="h-5 w-5 text-brand-500" /> Desempenho Cruzado (Carro x OS Executadas)
           </h2>
           <p className="text-xs text-slate-400 mt-1 print:hidden">
-            Preencha as Ordens de Serviço (OS) de cada carro no período. O sistema calcula a produtividade real e metas visuais associadas.
+            As OS de cada carro vêm sozinhas: GPS do carro (quem estava nele em cada dia) ou OS fechadas no IXC pelo motorista. Passe o mouse na etiqueta para ver de onde veio.
           </p>
         </div>
 
@@ -1331,8 +1346,13 @@ export default function Relatorios() {
                         <div className="text-xs text-slate-400 dark:text-slate-500">{s.placa} • Principal: {s.motoristaPrincipal}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="hidden print:inline font-bold text-slate-800">{s.os || '0'}</span>
-                        <input
+                        <span className={`${autoOS[s.veiculoId] ? '' : 'hidden'} print:inline font-bold text-slate-800 dark:text-slate-100`}>{s.os || '0'}</span>
+                        {autoOS[s.veiculoId] && (
+                          <span title={autoOS[s.veiculoId].detalhe} className="print:hidden ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-xxs font-bold text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
+                            {autoOS[s.veiculoId].fonte === 'gps' ? 'GPS' : autoOS[s.veiculoId].fonte === 'ixc' ? 'IXC' : autoOS[s.veiculoId].fonte === 'prestador' ? 'prestador' : 'sem técnico'}
+                          </span>
+                        )}
+                        {!autoOS[s.veiculoId] && <input
                           type="number"
                           min="0"
                           placeholder="0"
@@ -1342,7 +1362,7 @@ export default function Relatorios() {
                             salvarOS(s.veiculoId, val)
                           }}
                           className="print:hidden w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-slate-700 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                        />
+                        />}
                       </td>
                       <td className="px-4 py-3">
                         {limiteValor && percentGasto !== null ? (
