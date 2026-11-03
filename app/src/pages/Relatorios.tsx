@@ -1043,14 +1043,20 @@ export default function Relatorios() {
           {/* Gráfico de Gastos por Semana */}
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Gasto (R$) por semana</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
+            {/* 03/11/2026 (Jorge: "o relatório de volume L por semana cortou... o gráfico de coluna não ficou bom na folha A4"):
+                na impressão a largura é fixa (cabe na coluna da A4, como os outros gráficos) e cada barra mostra o valor */}
+            <ResponsiveContainer width={isPrinting ? 320 : "100%"} height={200}>
+              <BarChart data={comparativoSemanal} margin={{ top: 16, right: 8, left: -20, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
                 <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} tickFormatter={tickBRLk} />
                 <Tooltip content={<ChartTooltip formatter={(v) => fmtBRL(v)} />} />
-                <Bar dataKey={`gasto_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
-                <Bar dataKey={`gasto_${labelMesAtual}`} name={labelMesAtual} fill="#3b62f0" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Bar dataKey={`gasto_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting}>
+                  <LabelList dataKey={`gasto_${labelMesAnterior}`} position="top" fontSize={8} fill={ct.axis} formatter={(v: any) => (Number(v) ? tickBRLk(Number(v)) : '')} />
+                </Bar>
+                <Bar dataKey={`gasto_${labelMesAtual}`} name={labelMesAtual} fill="#3b62f0" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting}>
+                  <LabelList dataKey={`gasto_${labelMesAtual}`} position="top" fontSize={8} fill={ct.axis} formatter={(v: any) => (Number(v) ? tickBRLk(Number(v)) : '')} />
+                </Bar>
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
               </BarChart>
             </ResponsiveContainer>
@@ -1059,14 +1065,18 @@ export default function Relatorios() {
           {/* Gráfico de Litros por Semana */}
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Volume (L) por semana</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={comparativoSemanal} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={4}>
+            <ResponsiveContainer width={isPrinting ? 320 : "100%"} height={200}>
+              <BarChart data={comparativoSemanal} margin={{ top: 16, right: 8, left: -20, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
                 <XAxis dataKey="semana" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: ct.axis }} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip formatter={(v) => `${fmtNum(v)} L`} />} />
-                <Bar dataKey={`litros_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
-                <Bar dataKey={`litros_${labelMesAtual}`} name={labelMesAtual} fill="#10b981" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting} />
+                <Bar dataKey={`litros_${labelMesAnterior}`} name={labelMesAnterior} fill="#94a3b8" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting}>
+                  <LabelList dataKey={`litros_${labelMesAnterior}`} position="top" fontSize={8} fill={ct.axis} formatter={(v: any) => (Number(v) ? Math.round(Number(v)) : '')} />
+                </Bar>
+                <Bar dataKey={`litros_${labelMesAtual}`} name={labelMesAtual} fill="#10b981" radius={[4,4,0,0]} maxBarSize={22} isAnimationActive={!isPrinting}>
+                  <LabelList dataKey={`litros_${labelMesAtual}`} position="top" fontSize={8} fill={ct.axis} formatter={(v: any) => (Number(v) ? Math.round(Number(v)) : '')} />
+                </Bar>
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
               </BarChart>
             </ResponsiveContainer>
